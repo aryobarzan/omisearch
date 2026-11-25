@@ -6,10 +6,29 @@ Simple web interface for viewing tabular omics data by uploading a gene expressi
 
 ## Stack
 
-- **Backend:** FastAPI, sqlite, Docker
+- **Backend:** FastAPI, SQLite, Docker
   - **Authentication:** token-based (JWT)
 - **Frontend:** Next.js, React, Tailwind CSS
 
-## Miscellaneous:
+## Miscellaneous
+
+### Backend (FastAPI)
+
+FastAPI backend project was set up under `/backend` with a `requirements.txt`.
+
+### Frontend (Next.js)
+
+Next.js project was created under `/frontend` using the official project scaffolder, specifically: `pnpm create next-app@16 frontend --ts --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-pnpm --yes`
+
+- `--app`: use the modern app router approach
+- `--use-pnpm`: use pnpm as the package manager
+
+A few packages were then manually updated from the default ones, specifically:
+
+- `typescript`: ^5 -> ^6
+- `@types/node`: ^20 -> ^24
+- `eslint`: 9.39.5 -> ^10
+
+### Other
 
 - `.gitignore` was created via [https://www.toptal.com/developers/gitignore](https://www.toptal.com/developers/gitignore) for the languages/frameworks `python` and `nextjs`.
