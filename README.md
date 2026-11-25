@@ -4,6 +4,21 @@
 
 Simple web interface for viewing tabular omics data by uploading a gene expression table and sample annotation data.
 
+## Getting Started
+
+This monorepo uses Docker to start up both the backend and frontend using a single command:
+
+```bash
+docker compose up --build -d
+```
+
+Afterwards, you can access the app:
+
+- `localhost:3000`: Next.js frontend
+- `localhost:8000`: FastAPI backend, e.g., `localhost:8000/docs` for the generated OpenAPI documentation.
+
+Environment variables have sensible defaults, and the RSA keypair for JWT signing and verification is generated automatically, sono manual .env setup is required.
+
 ## Stack
 
 - **Backend:** FastAPI, SQLite, Docker
@@ -18,7 +33,11 @@ FastAPI backend project was set up under `/backend` with a `requirements.txt`.
 
 ### Frontend (Next.js)
 
-Next.js project was created under `/frontend` using the official project scaffolder, specifically: `pnpm create next-app@16 frontend --ts --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-pnpm --yes`
+Next.js project was created under `/frontend` using the official project scaffolder, specifically:
+
+```bash
+pnpm create next-app@16 frontend --ts --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-pnpm --yes
+```
 
 - `--app`: use the modern app router approach
 - `--use-pnpm`: use pnpm as the package manager
