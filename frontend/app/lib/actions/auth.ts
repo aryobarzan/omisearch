@@ -93,7 +93,7 @@ async function loginRegister(
     }
     (await cookies()).set("token", parsedData.data.access_token, {
       httpOnly: true,
-      secure: environment.production,
+      secure: environment.cookieSecure,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24,

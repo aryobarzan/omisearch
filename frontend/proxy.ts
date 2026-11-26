@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { importSPKI, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+import { environment } from "@/app/lib/config";
 
 // authentication not needed for these routes
 const PUBLIC_PATHS = ["/login", "/register"];
 
-let publicKeyPromise: ReturnType<typeof importSPKI> | null = null;
+let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
-function getPublicKey() {
-  const pem = process.env.JWT_PUBLIC_KEY;
-  if (!pem) return null;
-  if (!publicKeyPromise) {
-    publicKeyPromise = importSPKI(pem, "RS256");
+function getJWKS() {
+  if (!jwks) {
+    jwks = createRemoteJWKSet(
+      new URL(`${environment.apiUrl}/.well-known/jwks.json`),
+    );
   }
-  return publicKeyPromise;
+  return jwks;
 }
 
 export async function proxy(request: NextRequest) {
@@ -22,13 +23,12 @@ export async function proxy(request: NextRequest) {
 
   const token = request.cookies.get("token")?.value;
   let valid = false;
-  const publicKey = getPublicKey();
-  if (token && publicKey) {
+  if (token) {
     try {
-      await jwtVerify(token, await publicKey, { algorithms: ["RS256"] });
+      await jwtVerify(token, getJWKS(), { algorithms: ["RS256"] });
       valid = true;
     } catch {
-      // bad signature or expired
+      // bad signature, expired, or backend unreachable (in case getJWKS fails)
     }
   }
 
