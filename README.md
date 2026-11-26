@@ -27,6 +27,8 @@ Environment variables have sensible defaults, and the RSA keypair for JWT signin
 
 ### Authentication
 
+#### Backend
+
 Users register with a username and password. Upon registration/login, they are issued a signed json web token (JWT), to be attached to all subsequent requests by the frontend which require authentication.
 
 - Signing of the token is done with a keypair (RS256) - this allows the frontend (Next.js) to also perform verification using the public key.
@@ -40,6 +42,22 @@ Users register with a username and password. Upon registration/login, they are i
 - User data is stored in a lighter SQLite database, rather than in a PostgreSQL database hosted as a separate Docker service.
 - The `UserRole` field of the User schema was removed, as this project does not make a distinction between normal users and administrators for any kind of privileged access.
 - The route prefix `/users` from the original code was renamed to `/auth`.
+
+#### Frontend
+
+Authentication on the Next.js side is handled server-first using Server Actions, an `httpOnly` cookie, and Next.js 16's `proxy.ts` route guard:
+
+- The `/login` and `/register` forms use `react-hook-form` for instant client-side validation and `useActionState` to submit credentials to Next.js Server Actions (`app/lib/actions/auth.ts`), which re-validate inputs with `zod` before calling the FastAPI backend's `/auth/login` or `/auth/register` endpoints.
+- On success, the returned JWT is stored in an `httpOnly` cookie (`token`, `sameSite: "lax"`, 24-hour `maxAge`) so client-side JavaScript cannot read it. Logging out deletes the cookie and redirects to `/login`.
+- Route protection runs in `proxy.ts` using `jose` to verify the RS256 JWT signature before protected pages render, redirecting unauthenticated requests to `/login` (and already-authenticated users away from `/login` and `/register`).
+- Authenticated server-side API calls go through an `apiFetch` helper (`app/lib/api.ts`) that reads the `token` cookie and attaches it as an `Authorization: Bearer <token>` header.
+
+**Note:** similar to the backend, the frontend auth flow was adapted from my past [Next.js project](https://github.com/aryobarzan/photo-classification-nextjs), with several changes for this project:
+
+- Removed role/admin logic (`role` in response schemas, `isAdmin()` in `session.ts`, and admin dashboard/profile routes), simplifying `getUser()` to return a plain username string (`string | null`).
+- Updated auth calls from `/users/*` to `/auth/*` and dropped unused packages (`i18n-iso-countries`, `swr`).
+- Replaced custom CSS classes and Material Symbols icons with Tailwind CSS utility classes.
+- Removed top-level `process.env` throws in `app/lib/config.ts` and `proxy.ts` (falling back safely at build time) so `next build` succeeds cleanly inside Docker without requiring runtime environment variables.
 
 ### Database
 
