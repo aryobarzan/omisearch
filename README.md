@@ -63,6 +63,19 @@ Authentication on the Next.js side is handled server-first using Server Actions,
 
 A lightweight **SQLite** database is used for storage purposes (users), stored as a _.db_ file inside the backend itself. The forward-looking alternative would be a dedicated PostgreSQL database hosted as a separate Docker service, though given the scope of this project, that would be overkill. My past [FastAPI project](https://github.com/aryobarzan/photo_classification-fastapi), from which I am re-using the authentication and user schema code, relied on a PostgreSQL database.
 
+### Environment Variables
+
+All environment variables are optional and have defaults so `docker compose up --build` works without requiring an .env file:
+
+| Variable               | Service  | Default                                                          | Fallback Behavior                                         | Purpose                                                                      |
+| ---------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `DATABASE_URL`         | Backend  | `sqlite:///./data/omisearch.db`                                  | static default (file/folder created on startup)           | SQLAlchemy database connection URL                                           |
+| `JWT_PRIVATE_KEY_PATH` | Backend  | _N/A_                                                            | ephemeral RSA-2048 keypair generated in memory on startup | Optional path to a persistent RSA private key PEM file for RS256 signing     |
+| `DEMO_USERNAME`        | Backend  | `demo`                                                           | static default (empty disables seeding)                   | Username of the demo account seeded on startup                               |
+| `DEMO_PASSWORD`        | Backend  | `demo1234`                                                       | static default (empty disables seeding)                   | Password of the demo account seeded on startup                               |
+| `API_URL`              | Frontend | `http://backend:8000` (Docker) / `http://localhost:8000` (local) | static default                                            | Base URL used by Next.js server code and `proxy.ts` to reach FastAPI         |
+| `COOKIE_SECURE`        | Frontend | `false`                                                          | static default                                            | Set to `true` when serving over HTTPS to mark the `token` cookie as `Secure` |
+
 ## Miscellaneous
 
 ### Backend (FastAPI)
