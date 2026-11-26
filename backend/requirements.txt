@@ -1,2 +1,7 @@
 fastapi
 uvicorn[standard]
+sqlalchemy
+pyjwt[crypto]
+pwdlib[argon2]
+python-multipart
+python-dotenv
