@@ -15,6 +15,8 @@ const LoginResponseSchema = z.object({
 type LoginResponse = z.infer<typeof LoginResponseSchema>;
 type User = LoginResponse["user"];
 
+type AuthResult = { ok: true; user: User } | { ok: false; error: string };
+
 const CredentialsSchema = z.object({
   username: z
     .string()
@@ -33,12 +35,12 @@ export async function register(
     password: formData.get("password"),
   });
   if (!parsed.success) return "Invalid username or password format.";
-  const user = await loginRegister(
+  const result = await loginRegister(
     parsed.data.username,
     parsed.data.password,
     true,
   );
-  if (!user) return "Registration failed.";
+  if (!result.ok) return result.error;
   redirect("/");
 }
 
@@ -51,12 +53,12 @@ export async function login(
     password: formData.get("password"),
   });
   if (!parsed.success) return "Invalid username or password format.";
-  const user = await loginRegister(
+  const result = await loginRegister(
     parsed.data.username,
     parsed.data.password,
     false,
   );
-  if (!user) return "Login failed.";
+  if (!result.ok) return result.error;
   redirect("/");
 }
 
@@ -64,7 +66,7 @@ async function loginRegister(
   username: string,
   password: string,
   isRegistering: boolean,
-): Promise<User | null> {
+): Promise<AuthResult> {
   let body: FormData | string;
   const headers: Record<string, string> = {};
   if (isRegistering) {
@@ -76,20 +78,29 @@ async function loginRegister(
     body.append("password", password);
   }
 
-  const response = await fetch(
-    `${environment.apiUrl}/auth/${isRegistering ? "register" : "login"}`,
-    {
-      method: "POST",
-      headers,
-      body,
-    },
-  );
+  const fallbackError = isRegistering
+    ? "Registration failed."
+    : "Login failed.";
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `${environment.apiUrl}/auth/${isRegistering ? "register" : "login"}`,
+      {
+        method: "POST",
+        headers,
+        body,
+      },
+    );
+  } catch {
+    return { ok: false, error: "Could not reach the server." };
+  }
 
   if (response.ok) {
     const data = await response.json();
     const parsedData = LoginResponseSchema.safeParse(data);
     if (!parsedData.success) {
-      return null;
+      return { ok: false, error: fallbackError };
     }
     (await cookies()).set("token", parsedData.data.access_token, {
       httpOnly: true,
@@ -98,15 +109,19 @@ async function loginRegister(
       path: "/",
       maxAge: 60 * 60 * 24,
     });
-    return parsedData.data.user;
+    return { ok: true, user: parsedData.data.user };
   }
 
-  console.error(
-    `${isRegistering ? "Register" : "Login"} failed:`,
-    response.status,
-    await response.text(),
-  );
-  return null;
+  try {
+    const errData = (await response.json()) as { detail?: unknown };
+    if (typeof errData.detail === "string" && errData.detail.trim()) {
+      return { ok: false, error: errData.detail };
+    }
+  } catch {
+    // non-JSON error response
+  }
+
+  return { ok: false, error: fallbackError };
 }
 
 export async function logout(): Promise<void> {
