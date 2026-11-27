@@ -6,10 +6,11 @@ from pathlib import Path
 
 import pandas as pd
 
-# parents[0]: omisearch/backend/tests
-# parents[1]: omisearch/backend
-# parents[2]: omisearch
-SAMPLE_DATA_DIR = Path(__file__).resolve().parents[2] / "sample_data"
+# parents[0]: omisearch/backend/tests/analysis
+# parents[1]: omisearch/backend/tests
+# parents[2]: omisearch/backend
+# parents[3]: omisearch
+SAMPLE_DATA_DIR = Path(__file__).resolve().parents[3] / "sample_data"
 
 
 def basic_tables() -> tuple[pd.DataFrame, pd.DataFrame]:

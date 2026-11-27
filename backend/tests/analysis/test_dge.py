@@ -15,7 +15,7 @@ from analysis.dge import (
     run_dge,
     run_dge_from_csv,
 )
-from tests.helpers import SAMPLE_DATA_DIR, basic_tables
+from tests.analysis.helpers import SAMPLE_DATA_DIR, basic_tables
 
 
 def test_welch_t_log2_detects_up_down_and_handles_constant_gene() -> None:

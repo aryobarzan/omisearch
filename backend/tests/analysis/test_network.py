@@ -13,7 +13,7 @@ from analysis.network import (
     build_interaction_network,
     build_interaction_network_from_csv,
 )
-from tests.helpers import SAMPLE_DATA_DIR, basic_tables
+from tests.analysis.helpers import SAMPLE_DATA_DIR, basic_tables
 
 # Minimal dict-format DGE results (mirrors JSON rows read back from SQLite):
 # 2 connected significant genes (G_UP1, G_UP2), 1 isolated significant gene (G_ISO),

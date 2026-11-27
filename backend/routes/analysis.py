@@ -199,7 +199,11 @@ def list_analyses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List all analysis runs owned by the authenticated user, newest first."""
+    """List all analysis runs owned by the authenticated user, newest first.
+
+    Returns lightweight summaries (omitting raw CSVs and per-gene `results`) so
+    the dashboard list stays fast even with many runs.
+    """
     return crud_analysis.list_analysis_runs_for_user(db, current_user.id)
 
 
@@ -209,7 +213,7 @@ def get_analysis(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Retrieve metadata and per-gene DGE results for a single owned analysis run."""
+    """Retrieve full detail (including per-gene DGE `results`) for a single owned analysis run."""
     return _get_user_run(db, analysis_id, current_user.id)
 
 
