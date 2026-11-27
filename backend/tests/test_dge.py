@@ -25,7 +25,7 @@ def test_welch_t_log2_detects_up_down_and_handles_constant_gene() -> None:
     raw numeric values and easily reaches `padj < 0.001` even at n=4 per group.
     """
     expr, ann = basic_tables()
-    res = run_dge(expr, ann, test_method=DGETestMethod.WELCH_T, is_log2=True)
+    res = run_dge(expr, ann, test_method=DGETestMethod.welch_t, is_log2=True)
 
     # Check that "control" was automatically determined as "group_a".
     assert res.group_a == "control"
@@ -33,7 +33,7 @@ def test_welch_t_log2_detects_up_down_and_handles_constant_gene() -> None:
     assert res.n_group_a == 4
     assert res.n_group_b == 4
     assert res.total_genes == 4
-    assert res.test_method == DGETestMethod.WELCH_T
+    assert res.test_method == DGETestMethod.welch_t
 
     by_gene = {r.gene: r for r in res.results}
 
@@ -70,7 +70,7 @@ def test_mann_whitney_runs_and_separates_signal_from_null() -> None:
     expr, ann = basic_tables()
     res = run_dge(expr, ann, test_method="mann_whitney", is_log2=True)
 
-    assert res.test_method == DGETestMethod.MANN_WHITNEY
+    assert res.test_method == DGETestMethod.mann_whitney
     by_gene = {r.gene: r for r in res.results}
     assert by_gene["UP_1"].p_value < 0.05
     assert by_gene["DOWN_1"].p_value < 0.05
@@ -348,7 +348,7 @@ def test_dge_on_sample_data() -> None:
     expr_csv = (SAMPLE_DATA_DIR / "expression.csv").read_text(encoding="utf-8")
     ann_csv = (SAMPLE_DATA_DIR / "annotations.csv").read_text(encoding="utf-8")
 
-    res = run_dge_from_csv(expr_csv, ann_csv, test_method=DGETestMethod.WELCH_T, is_log2=True)
+    res = run_dge_from_csv(expr_csv, ann_csv, test_method=DGETestMethod.welch_t, is_log2=True)
     assert res.total_genes == 200
     assert res.group_a == "control"
     assert res.group_b == "treated"

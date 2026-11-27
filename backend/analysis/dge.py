@@ -17,9 +17,9 @@ from statsmodels.stats.multitest import multipletests
 
 class TestMethod(StrEnum):
     # parametric option for bell-shaped distribution, with no assumption on equal variances between the two groups
-    WELCH_T = "welch_t"
+    welch_t = "welch_t"
     # non-parametric option to better handle data with large outliers
-    MANN_WHITNEY = "mann_whitney"
+    mann_whitney = "mann_whitney"
 
 DEFAULT_EPSILON = 1e-6
 CONTROL_GROUP_ALIASES = {"control", "ctrl", "untreated", "vehicle", "normal", "wt"}
@@ -246,12 +246,12 @@ def _compute_p_value(
     if const_a and const_b and vals_a[0] == vals_b[0]:
         return 1.0
 
-    if test_method == TestMethod.WELCH_T:
+    if test_method == TestMethod.welch_t:
         if const_a and const_b:
             # Zero variance in both groups with distinct constant levels.
             return 0.0
         _, p_val = stats.ttest_ind(vals_b, vals_a, equal_var=False)
-    elif test_method == TestMethod.MANN_WHITNEY:
+    elif test_method == TestMethod.mann_whitney:
         _, p_val = stats.mannwhitneyu(vals_b, vals_a, alternative="two-sided")
     else:
         valid = ", ".join(f"'{m.value}'" for m in TestMethod)
@@ -269,7 +269,7 @@ def run_dge(
     expression_df: pd.DataFrame,
     annotations_df: pd.DataFrame,
     *,
-    test_method: TestMethod | str = TestMethod.WELCH_T,
+    test_method: TestMethod | str = TestMethod.welch_t,
     is_log2: bool = True,
     reference_group: str | None = None,
     eps: float = DEFAULT_EPSILON,
@@ -338,7 +338,7 @@ def run_dge_from_csv(
     expression_csv: str | bytes,
     annotations_csv: str | bytes,
     *,
-    test_method: TestMethod | str = TestMethod.WELCH_T,
+    test_method: TestMethod | str = TestMethod.welch_t,
     is_log2: bool = True,
     reference_group: str | None = None,
     eps: float = DEFAULT_EPSILON,
