@@ -2,11 +2,16 @@
 
 ## Overview
 
-Simple web interface for viewing tabular omics data by uploading a gene expression table and sample annotation data.
+Web application that makes tabular omics **differential gene expression (DGE)** analysis and **gene–gene interaction network** exploration accessible to non-tech savvy users.
+
+- Users can upload a gene expression matrix and sample annotations CSV.
+  - Alternatively, they can use the built-in simulated dataset.
+- The output of the statistical tests can be filtered, sorted and exported.
+- The user can also expore interactions via color-coded network graphs, powered by Cytoscape.js interaction clusters.
 
 ## Getting Started
 
-This monorepo uses Docker to start up both the backend and frontend using a single command:
+This monorepo uses **Docker** to start up both the backend and frontend using a single command:
 
 ```bash
 docker compose up --build -d
@@ -24,9 +29,15 @@ Environment variables have sensible defaults, and the RSA keypair for JWT signin
 
 ## Stack
 
-- **Backend:** FastAPI, SQLite, Docker
-  - **Authentication:** token-based (JWT), password hashing using Argon2
-- **Frontend:** Next.js, React, Tailwind CSS
+- **Backend:** FastAPI (Python 3.15)
+  - **Database:** SQLite, SQLAlchemy (ORM)
+  - **Statistical testing:** `pandas`, `scipy`, `statsmodels` Python packages.
+  - **Authentication:** RS256 JWT (via JWKS), password hashing with Argon2 (`pwdlib`)
+- **Frontend:** Next.js 16 (App Router, React 19, TypeScript), Tailwind CSS
+  - **Authentication:** `jose` for JWT signature verification
+  - **Form validation:** `react-hook-form`, `zod`
+  - **Network graph visualization:** `cytoscape.js`
+- **CI:** GitHub Actions (`.github/workflows/ci.yml`)
 
 ### Authentication
 
@@ -64,48 +75,91 @@ Authentication on the Next.js side is handled server-first using Server Actions,
 - Replaced custom CSS classes and Material Symbols icons with Tailwind CSS utility classes.
 - Removed top-level `process.env` throws in `app/lib/config.ts` and `proxy.ts` (falling back safely at build time) so `next build` succeeds cleanly inside Docker without requiring runtime environment variables.
 
+### CSV Input Formats
+
+All CSV files are decoded with `utf-8-sig` (handling Excel UTF-8 BOM headers cleanly) and capped at 10 MB per upload. Sample simulated files are bundled in `sample_data/` (reproducible via `python sample_data/generate_sample_data.py`, `seed=1`, using [MSigDB Hallmark gene symbols](https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp#H) and [STRING-style confidence scores](https://string-db.org/help//getting_started/#data-settings)).
+
+1. **Gene Expression Matrix (`expression.csv`)** — genes as rows (first column), sample IDs as columns:
+   ```csv
+   gene,CTRL_1,CTRL_2,TRTD_1,TRTD_2
+   ABCA1,7.6582,7.9428,9.2662,9.3827
+   ABI1,9.1204,8.8750,7.0112,6.9540
+   ```
+2. **Sample Annotations (`annotations.csv`)** — required columns `sample,group`, exactly 2 distinct groups with ≥ 2 samples per group:
+   ```csv
+   sample,group
+   CTRL_1,control
+   CTRL_2,control
+   TRTD_1,treated
+   TRTD_2,treated
+   ```
+3. **Gene–Gene Interactions (`interactions.csv`)** — required columns `gene_a,gene_b` plus an optional numeric `score` (e.g., STRING combined confidence score in `0.0–1.0`):
+   ```csv
+   gene_a,gene_b,score
+   ABCA1,ABI1,0.803
+   ABCA1,ATP5PO,0.728
+   ```
+
+### Statistical Methodology & Network Filtering
+
+- **Reference group selection:** Recognizable control aliases (`control`, `ctrl`, `untreated`, `vehicle`, `normal`, `wt`, case-insensitive) are automatically selected as `group_a` (baseline) so positive `log2_fold_change` means up-regulated in `group_b`. Otherwise groups sort alphabetically (and can be overridden via `reference_group`).
+- **Fold change (`is_log2` toggle):**
+  - `is_log2 = true` (default): `mean(group_b) - mean(group_a)`.
+  - `is_log2 = false` (linear scale, non-negative values): `log2((mean(group_b) + 1e-6) / (mean(group_a) + 1e-6))`.
+- **Significance testing:**
+  - **Welch's t-test** (`welch_t`, default): Parametric two-sample t-test (`equal_var=False`), robust to unequal group variances.
+  - **Mann–Whitney U** (`mann_whitney`): Non-parametric two-sided rank test, robust to non-normal distributions and outliers.
+  - Zero-variance / constant genes are handled safely: `p = 1.0` when identical across groups and `p = 0.0` under Welch's t-test for distinct constant levels.
+- **Multiple testing correction:** **Benjamini–Hochberg FDR** (`statsmodels.stats.multitest.multipletests(..., method="fdr_bh")`), producing `adjusted_p_value` (`padj`).
+- **Interaction network:** Filters uploaded or sample edges to pairs where both genes meet `padj <= padj_threshold` and `|log2FC| >= lfc_threshold` (plus optional `min_score`), deduplicates undirected edges (retaining max score), drops self-loops, and renders in [Cytoscape.js](https://cytoscape.org/) with blue → neutral → red `log2FC` coloring.
+
 ### Database
 
-A lightweight **SQLite** database is used for storage purposes (users), stored as a _.db_ file inside the backend itself. The forward-looking alternative would be a dedicated PostgreSQL database hosted as a separate Docker service, though given the scope of this project, that would be overkill. My past [FastAPI project](https://github.com/aryobarzan/photo_classification-fastapi), from which I am re-using the authentication and user schema code, relied on a PostgreSQL database.
+A lightweight **SQLite** database is used for storage (`users` and `analysis_runs`), stored as a _.db_ file inside the backend itself (`./data/omisearch.db`). Raw expression/annotation CSVs and serialized JSON results are stored on `AnalysisRun` so runs can be re-executed with different statistical options without re-uploading. The forward-looking alternative would be a dedicated PostgreSQL database hosted as a separate Docker service, though given the scope of this project, that would be overkill. My past [FastAPI project](https://github.com/aryobarzan/photo_classification-fastapi), from which I am re-using the authentication and user schema code, relied on a PostgreSQL database.
 
 ### Testing
 
 #### Backend
 
-The `pytest` package is used to perform unit tests. The tests can be directly run without requiring a running docker instance of the backend service:
+The `pytest` package runs both pure-Python analysis unit tests and FastAPI integration tests (backed by isolated per-test SQLite databases) without requiring Docker:
 
 ```bash
 cd backend
 uv run pytest -v
 ```
 
-Test coverage (`backend/tests/test_dge.py` & `backend/tests/test_network.py` — 31 unit tests):
+Test coverage (**38 tests** across `backend/tests/analysis/` and `backend/tests/api/`):
 
-- **DGE (`analysis/dge.py`):**
-  - Welch's t-test and Mann–Whitney U on log2 expression data, including constant/zero-variance genes and result sorting.
-  - Linear-scale (`is_log2=False`) log2 fold change with pseudocount (`eps`), including all-zero genes.
-  - Benjamini–Hochberg FDR consistency against `statsmodels`.
-  - Control-group alias auto-detection (`control`, `vehicle`, etc.) and explicit `reference_group` override.
-  - 13 validation error cases (`DGEValidationError`): empty CSV, missing required columns, duplicate samples/genes, wrong group count (1 or 3 groups), `< 2` samples per group, missing sample column, non-numeric / infinite / negative-linear values, unsupported test method, and unknown reference group.
-  - End-to-end DGE run on the simulated `sample_data/` dataset.
-- **Interaction Network (`analysis/network.py`):**
-  - Filtering by `padj_threshold`, `lfc_threshold`, and `min_score`, undirected edge deduplication (retaining max score), self-loop removal, and `include_isolated` toggle.
-  - 2-column edge lists without an optional `score` column.
-  - 7 validation error cases (`NetworkValidationError`): empty CSV, missing `gene_a`/`gene_b`, missing gene values, non-numeric or infinite scores, and out-of-range thresholds.
-  - End-to-end network pruning on `sample_data/interactions.csv`.
+- **Analysis unit tests (`backend/tests/analysis/` — 31 tests):**
+  - **DGE (`test_dge.py`, 19 tests):** Welch's t-test, Mann–Whitney U, constant/zero-variance genes, linear-scale `log2FC` with pseudocount, Benjamini–Hochberg FDR vs. `statsmodels`, control-alias ordering & `reference_group` override, 13 `DGEValidationError` cases, and `sample_data/` integration.
+  - **Interaction Network (`test_network.py`, 12 tests):** Threshold filtering, undirected edge deduplication (max score), self-loop removal, `include_isolated`, `min_score`, 2-column edge lists without `score`, 7 `NetworkValidationError` cases, and `sample_data/` monotonic pruning.
+- **API integration tests (`backend/tests/api/` — 7 tests):**
+  - `test_auth.py`: `/health`, `/.well-known/jwks.json`, seeded `demo` login, registration, `409` duplicate conflict, `401` invalid credentials & unauthenticated guards.
+  - `test_analyses.py`: CSV upload, DGE run & Mann–Whitney re-run, summary list vs. detail results, `auto_run` validation, failed pending runs, and cross-user `404` isolation.
+  - `test_network_api.py`: `POST /analyses/sample` + `POST /analyses/{id}/network` (`use_sample=true`, custom edge upload, and `400` error cases).
+
+#### Frontend
+
+```bash
+cd frontend
+pnpm lint && pnpm build
+```
+
+Both the backend test suite and frontend lint/build run automatically on every push and pull request via GitHub Actions, with the jobs defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ### Environment Variables
 
-All environment variables are optional and have defaults so `docker compose up --build` works without requiring an .env file:
+All environment variables are optional and have defaults so `docker compose up --build` works without requiring an `.env` file:
 
-| Variable               | Service  | Default                                                          | Fallback Behavior                                         | Purpose                                                                      |
-| ---------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `DATABASE_URL`         | Backend  | `sqlite:///./data/omisearch.db`                                  | static default (file/folder created on startup)           | SQLAlchemy database connection URL                                           |
-| `JWT_PRIVATE_KEY_PATH` | Backend  | _N/A_                                                            | ephemeral RSA-2048 keypair generated in memory on startup | Optional path to a persistent RSA private key PEM file for RS256 signing     |
-| `DEMO_USERNAME`        | Backend  | `demo`                                                           | static default (empty disables seeding)                   | Username of the demo account seeded on startup                               |
-| `DEMO_PASSWORD`        | Backend  | `demo1234`                                                       | static default (empty disables seeding)                   | Password of the demo account seeded on startup                               |
-| `API_URL`              | Frontend | `http://backend:8000` (Docker) / `http://localhost:8000` (local) | static default                                            | Base URL used by Next.js server code and `proxy.ts` to reach FastAPI         |
-| `COOKIE_SECURE`        | Frontend | `false`                                                          | static default                                            | Set to `true` when serving over HTTPS to mark the `token` cookie as `Secure` |
+| Variable               | Service  | Default                                                          | Fallback Behavior                                         | Purpose                                                                              |
+| ---------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `DATABASE_URL`         | Backend  | `sqlite:///./data/omisearch.db`                                  | static default (file/folder created on startup)           | SQLAlchemy database connection URL                                                   |
+| `JWT_PRIVATE_KEY_PATH` | Backend  | _N/A_                                                            | ephemeral RSA-2048 keypair generated in memory on startup | Optional path to a persistent RSA private key PEM file for RS256 signing             |
+| `DEMO_USERNAME`        | Backend  | `demo`                                                           | static default (empty disables seeding)                   | Username of the demo account seeded on startup                                       |
+| `DEMO_PASSWORD`        | Backend  | `demo1234`                                                       | static default (empty disables seeding)                   | Password of the demo account seeded on startup                                       |
+| `SAMPLE_DATA_DIR`      | Backend  | `../sample_data` (local) / `/sample_data` (Docker)               | static default                                            | Directory containing bundled `expression.csv`, `annotations.csv`, `interactions.csv` |
+| `API_URL`              | Frontend | `http://backend:8000` (Docker) / `http://localhost:8000` (local) | static default                                            | Base URL used by Next.js server code and `proxy.ts` to reach FastAPI                 |
+| `COOKIE_SECURE`        | Frontend | `false`                                                          | static default                                            | Set to `true` when serving over HTTPS to mark the `token` cookie as `Secure`         |
 
 ## Miscellaneous
 
