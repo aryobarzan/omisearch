@@ -15,6 +15,9 @@ docker compose up --build -d
 Afterwards, you can access the app:
 
 - `localhost:3000`: Next.js frontend
+  - A demo user is seeded automatically for you to login with:
+    - _username:_ `demo`
+    - _password:_ `demo1234`
 - `localhost:8000`: FastAPI backend, e.g., `localhost:8000/docs` for the generated OpenAPI documentation.
 
 Environment variables have sensible defaults, and the RSA keypair for JWT signing and verification is generated automatically, so no manual .env setup is required.
@@ -64,6 +67,32 @@ Authentication on the Next.js side is handled server-first using Server Actions,
 ### Database
 
 A lightweight **SQLite** database is used for storage purposes (users), stored as a _.db_ file inside the backend itself. The forward-looking alternative would be a dedicated PostgreSQL database hosted as a separate Docker service, though given the scope of this project, that would be overkill. My past [FastAPI project](https://github.com/aryobarzan/photo_classification-fastapi), from which I am re-using the authentication and user schema code, relied on a PostgreSQL database.
+
+### Testing
+
+#### Backend
+
+The `pytest` package is used to perform unit tests. The tests can be directly run without requiring a running docker instance of the backend service:
+
+```bash
+cd backend
+uv run pytest -v
+```
+
+Test coverage (`backend/tests/test_dge.py` & `backend/tests/test_network.py` — 31 unit tests):
+
+- **DGE (`analysis/dge.py`):**
+  - Welch's t-test and Mann–Whitney U on log2 expression data, including constant/zero-variance genes and result sorting.
+  - Linear-scale (`is_log2=False`) log2 fold change with pseudocount (`eps`), including all-zero genes.
+  - Benjamini–Hochberg FDR consistency against `statsmodels`.
+  - Control-group alias auto-detection (`control`, `vehicle`, etc.) and explicit `reference_group` override.
+  - 13 validation error cases (`DGEValidationError`): empty CSV, missing required columns, duplicate samples/genes, wrong group count (1 or 3 groups), `< 2` samples per group, missing sample column, non-numeric / infinite / negative-linear values, unsupported test method, and unknown reference group.
+  - End-to-end DGE run on the simulated `sample_data/` dataset.
+- **Interaction Network (`analysis/network.py`):**
+  - Filtering by `padj_threshold`, `lfc_threshold`, and `min_score`, undirected edge deduplication (retaining max score), self-loop removal, and `include_isolated` toggle.
+  - 2-column edge lists without an optional `score` column.
+  - 7 validation error cases (`NetworkValidationError`): empty CSV, missing `gene_a`/`gene_b`, missing gene values, non-numeric or infinite scores, and out-of-range thresholds.
+  - End-to-end network pruning on `sample_data/interactions.csv`.
 
 ### Environment Variables
 
