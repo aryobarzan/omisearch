@@ -80,10 +80,3 @@ def mark_analysis_failed(db: Session, run: AnalysisRun) -> AnalysisRun:
     db.commit()
     db.refresh(run)
     return run
-
-
-# Decode stored JSON gene results into a list of dicts (empty list if not yet run).
-def parse_stored_results(run: AnalysisRun) -> list[dict]:
-    if not run.results_json:
-        return []
-    return json.loads(run.results_json)

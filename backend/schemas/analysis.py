@@ -25,6 +25,8 @@ class AnalysisRunRequestSchema(BaseModel):
 
 # Optional request body for POST /analyses/sample to create (and optionally run) the simulated dataset.
 class AnalysisSampleCreateSchema(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(
         default="Sample Dataset (Simulated)", min_length=1, max_length=120
     )

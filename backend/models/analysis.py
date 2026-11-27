@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
+import json
 
 from analysis.dge import TestMethod
 from database.base import Base
@@ -8,12 +9,21 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class AnalysisStatus(StrEnum):
+    """Lifecycle states for a stored DGE analysis run."""
+
     pending = "pending"
     completed = "completed"
     failed = "failed"
 
 
 class AnalysisRun(Base):
+    """SQLAlchemy ORM model representing a user's uploaded dataset and DGE analysis run.
+
+    Stores raw expression/annotation CSVs so DGE can be executed or re-run with
+    different options without re-uploading, along with summary metrics and
+    serialized per-gene results once completed.
+    """
+
     __tablename__ = "analysis_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -49,3 +59,10 @@ class AnalysisRun(Base):
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
     )
+
+    @property
+    def results(self) -> list[dict]:
+        """Return decoded `results_json` as a list of gene result dicts (empty if not yet run)."""
+        if not self.results_json:
+            return []
+        return json.loads(self.results_json)
