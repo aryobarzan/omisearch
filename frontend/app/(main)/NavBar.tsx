@@ -20,7 +20,17 @@ export default function NavBar() {
                 : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }
           >
-            Analyses
+            Dashboard
+          </Link>
+          <Link
+            href="/analyses"
+            className={
+              pathname.startsWith("/analyses")
+                ? "text-blue-600 underline underline-offset-4"
+                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }
+          >
+            All Runs
           </Link>
         </div>
       </nav>

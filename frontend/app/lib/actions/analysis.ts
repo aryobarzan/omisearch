@@ -10,6 +10,21 @@ export type UploadActionState =
   | { status: "error"; message: string }
   | { status: "success"; run: AnalysisRunSummary };
 
+async function extractErrorDetail(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const errBody = (await response.json()) as { detail?: unknown };
+    if (typeof errBody.detail === "string" && errBody.detail.trim()) {
+      return errBody.detail;
+    }
+  } catch {
+    // non-JSON error body
+  }
+  return fallback;
+}
+
 export async function uploadAndRunAnalysis(
   _prevState: UploadActionState,
   formData: FormData,
@@ -63,21 +78,55 @@ export async function uploadAndRunAnalysis(
   }
 
   if (!response.ok) {
-    try {
-      const errBody = (await response.json()) as { detail?: unknown };
-      if (typeof errBody.detail === "string" && errBody.detail.trim()) {
-        return { status: "error", message: errBody.detail };
-      }
-    } catch {
-      // non-JSON error body
-    }
-    return {
-      status: "error",
-      message: `Upload failed (HTTP ${response.status}).`,
-    };
+    const detail = await extractErrorDetail(
+      response,
+      `Upload failed (HTTP ${response.status}).`,
+    );
+    return { status: "error", message: detail };
   }
 
   const run = (await response.json()) as AnalysisRunSummary;
   revalidatePath("/");
+  revalidatePath("/analyses");
+  return { status: "success", run };
+}
+
+export async function loadAndRunSampleAnalysis(
+  _prevState: UploadActionState,
+  formData: FormData,
+): Promise<UploadActionState> {
+  const testMethod = String(formData.get("test_method") ?? "welch_t");
+
+  let response: Response;
+  try {
+    response = await apiFetch("/analyses/sample", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Sample Dataset (Simulated)",
+        test_method: testMethod,
+        is_log2: true,
+        auto_run: true,
+      }),
+    });
+  } catch (err) {
+    unstable_rethrow(err);
+    return {
+      status: "error",
+      message: "Could not reach the server.",
+    };
+  }
+
+  if (!response.ok) {
+    const detail = await extractErrorDetail(
+      response,
+      `Failed to run sample dataset (HTTP ${response.status}).`,
+    );
+    return { status: "error", message: detail };
+  }
+
+  const run = (await response.json()) as AnalysisRunSummary;
+  revalidatePath("/");
+  revalidatePath("/analyses");
   return { status: "success", run };
 }
