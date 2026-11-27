@@ -3,12 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { apiFetch } from "../api";
-import type { AnalysisRunSummary } from "../types/analysis";
+import type {
+  AnalysisRunSummary,
+  NetworkResponse,
+} from "../types/analysis";
 
 export type UploadActionState =
   | { status: "idle" }
   | { status: "error"; message: string }
   | { status: "success"; run: AnalysisRunSummary };
+
+export type NetworkActionState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | {
+      status: "success";
+      network: NetworkResponse;
+      source: "sample" | "upload";
+    };
 
 async function extractErrorDetail(
   response: Response,
@@ -129,4 +141,73 @@ export async function loadAndRunSampleAnalysis(
   revalidatePath("/");
   revalidatePath("/analyses");
   return { status: "success", run };
+}
+
+export async function buildAnalysisNetwork(
+  _prevState: NetworkActionState,
+  formData: FormData,
+): Promise<NetworkActionState> {
+  const analysisId = String(formData.get("analysis_id") ?? "").trim();
+  const mode = String(formData.get("mode") ?? "sample");
+  const padjThreshold = String(formData.get("padj_threshold") ?? "0.05");
+  const lfcThreshold = String(formData.get("lfc_threshold") ?? "1.0");
+  const minScore = String(formData.get("min_score") ?? "").trim();
+  const includeIsolated = formData.get("include_isolated") === "on";
+  const interactionsFile = formData.get("interactions_file");
+
+  if (!/^\d+$/.test(analysisId)) {
+    return { status: "error", message: "Invalid analysis ID." };
+  }
+
+  const payload = new FormData();
+  payload.append("padj_threshold", padjThreshold);
+  payload.append("lfc_threshold", lfcThreshold);
+  payload.append("include_isolated", String(includeIsolated));
+  if (minScore !== "") {
+    payload.append("min_score", minScore);
+  }
+
+  const useSample = mode === "sample";
+  if (useSample) {
+    payload.append("use_sample", "true");
+  } else {
+    if (!(interactionsFile instanceof File) || interactionsFile.size === 0) {
+      return {
+        status: "error",
+        message:
+          "Please select an interactions CSV file (gene_a,gene_b[,score]).",
+      };
+    }
+    payload.append("use_sample", "false");
+    payload.append("interactions_file", interactionsFile);
+  }
+
+  let response: Response;
+  try {
+    response = await apiFetch(`/analyses/${analysisId}/network`, {
+      method: "POST",
+      body: payload,
+    });
+  } catch (err) {
+    unstable_rethrow(err);
+    return {
+      status: "error",
+      message: "Could not reach the server.",
+    };
+  }
+
+  if (!response.ok) {
+    const detail = await extractErrorDetail(
+      response,
+      `Failed to build network (HTTP ${response.status}).`,
+    );
+    return { status: "error", message: detail };
+  }
+
+  const network = (await response.json()) as NetworkResponse;
+  return {
+    status: "success",
+    network,
+    source: useSample ? "sample" : "upload",
+  };
 }

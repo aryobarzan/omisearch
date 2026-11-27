@@ -185,6 +185,9 @@ importers:
 
   .:
     dependencies:
+      cytoscape:
+        specifier: ^3.35.0
+        version: 3.35.0
       jose:
         specifier: ^6.2.18
         version: 6.2.18
@@ -1058,6 +1061,10 @@ packages:
 
   csstype@3.2.4:
     resolution: {integrity: sha512-PoKaoPzQapnEoqUSnHx1u6W6ku8CVEgKsnpmmzU3m1nwkidpPBQ8V/Zq2+bWNrsOKoKLwTGdbx6xF7BXP1zLVQ==}
+
+  cytoscape@3.35.0:
+    resolution: {integrity: sha512-sMvBIXiGMnhkCaWz2R06FwF/27MNlS+Tqvi17foO9UhnUg3XGZccKjxsvEqQFAQYMSSZmN5SxYzUYlQ0DOJJ3g==}
+    engines: {node: '>=0.10'}
 
   damerau-levenshtein@1.0.8:
     resolution: {integrity: sha512-sdQSFB7+llfUcQHUQO3+B8ERRj0Oa4w9POWMI/puGtuf7gFywGmkaLCElnudfTiKZV+NvHqL0ifzdrI8Ro7ESA==}
@@ -2921,6 +2928,8 @@ snapshots:
       which: 2.0.2
 
   csstype@3.2.4: {}
+
+  cytoscape@3.35.0: {}
 
   damerau-levenshtein@1.0.8: {}
 

@@ -5,7 +5,19 @@ import NavBar from "./NavBar";
 export default function MainLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <NavBar />
+      <Suspense
+        fallback={
+          <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+              <span className="text-lg font-semibold tracking-tight">
+                Omisearch
+              </span>
+            </nav>
+          </header>
+        }
+      >
+        <NavBar />
+      </Suspense>
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8">
         {children}
       </main>

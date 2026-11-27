@@ -4,6 +4,7 @@ import {
   loadAndRunSampleAnalysis,
   type UploadActionState,
 } from "@/app/lib/actions/analysis";
+import Link from "next/link";
 import { useActionState } from "react";
 
 const INITIAL_STATE: UploadActionState = { status: "idle" };
@@ -64,12 +65,20 @@ export default function SampleDatasetCard() {
       {state.status === "success" && (
         <div
           role="status"
-          className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
+          className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
         >
-          <strong>{state.run.name}</strong> completed:{" "}
-          <strong>{state.run.significant_genes}</strong> /{" "}
-          {state.run.total_genes} significant genes (<code>padj ≤ 0.05</code>,{" "}
-          {state.run.group_a} vs. {state.run.group_b}).
+          <span>
+            <strong>{state.run.name}</strong> completed:{" "}
+            <strong>{state.run.significant_genes}</strong> /{" "}
+            {state.run.total_genes} significant genes (<code>padj ≤ 0.05</code>,{" "}
+            {state.run.group_a} vs. {state.run.group_b}).
+          </span>
+          <Link
+            href={`/analyses/${state.run.id}`}
+            className="font-semibold underline underline-offset-2"
+          >
+            View results →
+          </Link>
         </div>
       )}
     </section>
