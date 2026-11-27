@@ -1,11 +1,19 @@
-export default function Home() {
+import UploadForm from "./UploadForm";
+
+export default function DashboardPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <h1 className="text-3xl font-semibold tracking-tight">Omisearch</h1>
-      <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-        Differential gene expression analysis and gene interaction network
-        exploration.
-      </p>
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          DGE Analysis Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          Upload expression and annotation CSVs to run differential gene
+          expression analysis and explore gene interaction networks.
+        </p>
+      </div>
+
+      <UploadForm />
     </div>
   );
 }
