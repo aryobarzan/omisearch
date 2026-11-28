@@ -1,44 +1,79 @@
 import { apiFetch } from "@/app/lib/api";
 import type { AnalysisRunSummary } from "@/app/lib/types/analysis";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 
 const TEST_LABELS: Record<AnalysisRunSummary["test_method"], string> = {
-  welch_t: "Welch's t-test",
+  welch_t: "Welch’s t-test",
   mann_whitney: "Mann–Whitney U",
 };
 
-const STATUS_STYLES: Record<AnalysisRunSummary["status"], string> = {
-  completed:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  pending:
-    "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+const STATUS_META: Record<
+  AnalysisRunSummary["status"],
+  { label: string; className: string; Icon: typeof CheckCircle2 }
+> = {
+  completed: {
+    label: "Completed",
+    className: "text-status-success",
+    Icon: CheckCircle2,
+  },
+  pending: {
+    label: "Pending",
+    className: "text-status-warning",
+    Icon: Clock,
+  },
+  failed: {
+    label: "Failed",
+    className: "text-status-error",
+    Icon: AlertCircle,
+  },
 };
 
-function formatTimestamp(iso: string): string {
-  // SQLite CURRENT_TIMESTAMP lacks a trailing Z; normalize so Date parses as UTC.
-  const normalized = iso.includes("T") ? iso : iso.replace(" ", "T");
-  const withZone = /[zZ]|[+-]\d{2}:\d{2}$/.test(normalized)
-    ? normalized
-    : `${normalized}Z`;
-  const date = new Date(withZone);
+function formatDateShort(iso: string): string {
+  const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString("en-US", {
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const datePart = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timePart = date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
+  return `${datePart} · ${timePart}`;
 }
 
 export function RunsListSkeleton({ title }: { title: string }) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-      <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-        Loading analysis runs...
-      </p>
+    <section className="flex flex-col gap-5 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
+      <div className="flex items-center justify-between border-b border-ghost-border pb-4">
+        <h2 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
+          {title}
+        </h2>
+      </div>
+      <div className="flex flex-col gap-1.5" aria-busy="true">
+        <div className="h-18 animate-pulse rounded-t-3xl rounded-b-md border border-ghost-border bg-surface-container-low/70" />
+        <div className="h-18 animate-pulse rounded-t-md rounded-b-3xl border border-ghost-border bg-surface-container-low/70" />
+      </div>
     </section>
   );
 }
@@ -65,90 +100,128 @@ export default async function RunsList({ limit }: { limit?: number }) {
   const visibleRuns = limit ? runs.slice(0, limit) : runs;
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+    <section className="flex flex-col gap-5 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
+      <div className="flex flex-col justify-between gap-space-sm pb-4 sm:flex-row sm:items-center">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h2 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
+            {title}
+          </h2>
           {limit && totalCount > 0 && (
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="type-body-sm text-xs text-outline">
               Showing {visibleRuns.length} of {totalCount} run
               {totalCount === 1 ? "" : "s"}
-            </p>
+            </span>
           )}
         </div>
 
         {limit && (
           <Link
             href="/analyses"
-            className="text-sm font-medium text-blue-600 hover:underline"
+            // self-start: avoid the button stretching to fill the width when displayed in a column (small devices)
+            // sm:self-auto: on bigger devices, inherit instead the "items-center" from teh parent container to center it vertically
+            className="outlined-filled-button self-start sm:self-auto"
           >
-            View all runs →
+            <span>View all runs</span>
+            <ArrowRight aria-hidden="true" className="size-3.5" />
           </Link>
         )}
       </div>
 
       {loadError ? (
-        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
+        <div
+          role="alert"
+          className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
+        >
           {loadError}
-        </p>
+        </div>
       ) : visibleRuns.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-          No analysis runs yet. Run the simulated sample dataset or upload your
-          own CSV files to get started.
-        </p>
+        <div className="rounded-2xl border border-dashed border-ghost-border-strong bg-surface-container-low/50 px-6 py-8 text-center">
+          <p className="type-body-md text-on-surface-variant">
+            No analysis runs yet. Upload your CSV files or use the quick-start
+            dataset to get started.
+          </p>
+        </div>
       ) : (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                <th className="py-2 pr-4">Name</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2 pr-4">Test</th>
-                <th className="py-2 pr-4">Comparison</th>
-                <th className="py-2 pr-4">Significant (padj ≤ 0.05)</th>
-                <th className="py-2 pr-4">Created</th>
-                <th className="py-2 text-right">Results</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-              {visibleRuns.map((run) => (
-                <tr key={run.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                  <td className="py-3 pr-4 font-medium">{run.name}</td>
-                  <td className="py-3 pr-4">
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[run.status]}`}
-                    >
-                      {run.status}
+        <div className="flex flex-col gap-3">
+          <div className="hidden grid-cols-12 gap-4 rounded-xl border border-ghost-border bg-surface-container-low/70 px-5 py-2 text-xs font-semibold text-on-surface-variant md:grid">
+            <span className="col-span-4">Analysis name</span>
+            <span className="col-span-2">Status</span>
+            <span className="col-span-2">Test</span>
+            <span className="col-span-2">Comparison</span>
+            <span className="col-span-2 text-right">Significant</span>
+          </div>
+
+          <div className="flex flex-col gap-1.5" role="list">
+            {visibleRuns.map((run) => {
+              const status = STATUS_META[run.status];
+              const StatusIcon = status.Icon;
+
+              return (
+                <Link
+                  key={run.id}
+                  href={`/analyses/${run.id}`}
+                  role="listitem"
+                  className="group run-card"
+                >
+                  <div className="flex w-full flex-col md:col-span-4 md:w-auto">
+                    <span className="type-label-lg text-sm font-semibold text-on-surface transition-colors group-hover:text-on-primary-fixed">
+                      {run.name}
                     </span>
-                  </td>
-                  <td className="py-3 pr-4 text-zinc-600 dark:text-zinc-400">
-                    {TEST_LABELS[run.test_method]}
-                  </td>
-                  <td className="py-3 pr-4 text-zinc-600 dark:text-zinc-400">
-                    {run.group_a && run.group_b
-                      ? `${run.group_a} (${run.n_group_a}) vs. ${run.group_b} (${run.n_group_b})`
-                      : "—"}
-                  </td>
-                  <td className="py-3 pr-4">
-                    {run.significant_genes !== null && run.total_genes !== null
-                      ? `${run.significant_genes} / ${run.total_genes}`
-                      : "—"}
-                  </td>
-                  <td className="py-3 pr-4 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                    {formatTimestamp(run.created_at)}
-                  </td>
-                  <td className="py-3 text-right">
-                    <Link
-                      href={`/analyses/${run.id}`}
-                      className="font-medium text-blue-600 hover:underline"
+                    <span className="type-metric-sm text-outline md:hidden">
+                      {formatDateTime(run.created_at)}
+                    </span>
+                  </div>
+
+                  <div className="flex w-full items-center md:col-span-2 md:w-auto">
+                    <span
+                      className={`type-label-lg inline-flex items-center gap-1.5 text-xs font-medium ${status.className}`}
                     >
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <StatusIcon
+                        aria-hidden="true"
+                        className="size-4 shrink-0"
+                      />
+                      <span>{status.label}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex w-full items-center md:col-span-2 md:w-auto">
+                    <span className="type-body-sm text-xs text-on-surface-variant">
+                      {TEST_LABELS[run.test_method]}
+                    </span>
+                  </div>
+
+                  <div className="flex w-full items-center md:col-span-2 md:w-auto">
+                    <span className="type-body-sm text-xs text-on-surface-variant">
+                      {run.group_a && run.group_b
+                        ? `${run.group_a} (${run.n_group_a}) vs. ${run.group_b} (${run.n_group_b})`
+                        : "—"}
+                    </span>
+                  </div>
+
+                  <div className="flex w-full items-center justify-between gap-3 md:col-span-2 md:w-auto md:justify-end">
+                    <div className="flex flex-col md:items-end">
+                      <span className="type-metric-md text-xs font-semibold text-on-surface">
+                        {run.significant_genes !== null &&
+                        run.total_genes !== null
+                          ? `${run.significant_genes} / ${run.total_genes}`
+                          : "—"}
+                      </span>
+                      <span
+                        title={formatDateTime(run.created_at)}
+                        className="type-metric-sm hidden text-[11px] text-outline md:inline"
+                      >
+                        {formatDateShort(run.created_at)}
+                      </span>
+                    </div>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-outline transition-all group-hover:translate-x-0.5 group-hover:text-primary"
+                    />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
     </section>

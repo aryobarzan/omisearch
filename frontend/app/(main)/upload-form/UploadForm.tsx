@@ -10,14 +10,11 @@ import {
   type AnnotationsValidation,
   type ExpressionValidation,
 } from "@/app/lib/csvValidation";
-import { LoaderCircle, Rocket, Table } from "lucide-react";
+import { Dna, LoaderCircle, Table } from "lucide-react";
 import { useActionState, useId, useMemo, useRef, useState } from "react";
 import { AnalysisOptions, type TestMethod } from "./AnalysisOptions";
 import { CsvDropzoneField, type FieldValidation } from "./CsvDropzoneField";
-import {
-  ActionResultBanner,
-  ValidationBanners,
-} from "./UploadStatusBanners";
+import { ActionResultBanner, ValidationBanners } from "./UploadStatusBanners";
 
 const INITIAL_STATE: UploadActionState = { status: "idle" };
 
@@ -125,7 +122,7 @@ export default function UploadForm() {
     : null;
 
   return (
-    <section className="flex w-full flex-col gap-6 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-[0_8px_30px_rgba(15,23,42,0.03)] md:p-8">
+    <section className="flex w-full flex-col gap-6 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
       <div className="flex flex-col gap-1">
         <h2 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
           Upload Omics Dataset
@@ -227,7 +224,7 @@ export default function UploadForm() {
                 className="size-4 shrink-0 animate-spin"
               />
             ) : (
-              <Rocket aria-hidden="true" className="size-4 shrink-0" />
+              <Dna aria-hidden="true" className="size-4 shrink-0" />
             )}
             <span>
               {isPending ? "Running DGE analysis..." : "Upload & Run Analysis"}

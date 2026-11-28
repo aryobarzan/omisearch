@@ -1,9 +1,8 @@
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime, timezone
 
 from analysis.dge import TestMethod
 from models.analysis import AnalysisStatus
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # Single gene's differential expression statistics returned inside AnalysisRunDetailSchema.
@@ -52,6 +51,13 @@ class AnalysisRunSummarySchema(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("created_at", "updated_at", mode="after")
+    @classmethod
+    def ensure_utc(cls, value: datetime) -> datetime:
+        # SQLite CURRENT_TIMESTAMP gives us naive UTC datetimes, so we attach UTC as the timezone such that
+        # Pydantic serializes standard timestamps with a trailing `Z`.
+        return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
 
 
 # Full analysis response for GET /analyses/{id} and POST /analyses/{id}/run, including per-gene results.

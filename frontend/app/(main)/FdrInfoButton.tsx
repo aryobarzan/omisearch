@@ -12,7 +12,7 @@ export function FdrInfoButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-4 py-2 text-left text-on-primary-fixed-variant shadow-[0_1px_4px_rgba(15,23,42,0.04)] transition-all hover:bg-primary/14 active:bg-primary/20"
+        className="group outlined-filled-button gap-2 px-4 py-2 text-left text-on-primary-fixed-variant shadow-xs"
       >
         <Info
           aria-hidden="true"

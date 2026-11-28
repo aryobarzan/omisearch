@@ -12,11 +12,7 @@ const TEST_LABELS: Record<AnalysisRunDetail["test_method"], string> = {
 };
 
 function formatTimestamp(iso: string): string {
-  const normalized = iso.includes("T") ? iso : iso.replace(" ", "T");
-  const withZone = /[zZ]|[+-]\d{2}:\d{2}$/.test(normalized)
-    ? normalized
-    : `${normalized}Z`;
-  const date = new Date(withZone);
+  const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleString("en-US", {
     year: "numeric",

@@ -91,7 +91,10 @@
   /* Elevation & Ghost Borders */
   --ghost-border: rgba(15, 23, 42, 0.08);
   --ghost-border-strong: rgba(15, 23, 42, 0.16);
+  --shadow-nav: 0 2px 12px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 8px 32px rgba(15, 23, 42, 0.04);
   --shadow-floating: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-primary: 0 12px 32px rgba(0, 105, 72, 0.18);
 
   /* Spacing & Layout */
   --gutter: 1rem;
@@ -280,7 +283,10 @@
   --spacing-table-row: var(--table-row-height);
 
   /* Shadows */
+  --shadow-nav: var(--shadow-nav);
+  --shadow-card: var(--shadow-card);
   --shadow-floating: var(--shadow-floating);
+  --shadow-primary: var(--shadow-primary);
 }
 
 /* Base Defaults */

@@ -30,7 +30,7 @@ export default function SampleDatasetCard() {
     "Welch’s t-test";
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-on-primary shadow-[0_12px_36px_rgba(0,105,72,0.18)] md:p-8">
+    <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-on-primary shadow-primary md:p-8">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-20 -bottom-20 h-80 w-80 rounded-full bg-on-primary/5 blur-3xl"
