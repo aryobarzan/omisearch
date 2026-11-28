@@ -4,6 +4,10 @@ import {
   buildAnalysisNetwork,
   type NetworkActionState,
 } from "@/app/lib/actions/analysis";
+import {
+  validateInteractionsCsv,
+  type InteractionsValidation,
+} from "@/app/lib/csvValidation";
 import type {
   CytoscapeNodeData,
   NetworkResponse,
@@ -80,6 +84,26 @@ export default function NetworkView({
   const [layout, setLayout] = useState<LayoutName>("cose");
   const [selectedGeneId, setSelectedGeneId] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [fileCheck, setFileCheck] = useState<InteractionsValidation | null>(
+    null,
+  );
+  const fileSeq = useRef(0);
+
+  async function handleInteractionsFileChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0];
+    const seq = ++fileSeq.current;
+    setSelectedFileName(file?.name ?? "");
+    if (!file) {
+      setFileCheck(null);
+      return;
+    }
+    const result = await validateInteractionsCsv(file);
+    if (seq === fileSeq.current) {
+      setFileCheck(result);
+    }
+  }
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
@@ -336,27 +360,46 @@ export default function NetworkView({
         </div>
 
         <div className="flex flex-col gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <input
-              id="interactions_file"
-              name="interactions_file"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) =>
-                setSelectedFileName(e.target.files?.[0]?.name ?? "")
-              }
-              className="block max-w-xs text-sm file:mr-3 file:rounded file:border-0 file:bg-white file:px-2.5 py-1 file:py-1 file:text-xs file:font-medium file:shadow-xs hover:file:bg-zinc-100 dark:file:bg-zinc-800 dark:file:text-zinc-200"
-            />
-            <button
-              type="submit"
-              name="mode"
-              value="upload"
-              disabled={isPending || !selectedFileName}
-              onClick={() => setSelectedGeneId(null)}
-              className="rounded-md bg-slate-900 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 cursor-pointer"
-            >
-              {isPending ? "Building..." : "Build from Upload"}
-            </button>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                id="interactions_file"
+                name="interactions_file"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleInteractionsFileChange}
+                className="block max-w-xs text-sm file:mr-3 file:rounded file:border-0 file:bg-white file:px-2.5 py-1 file:py-1 file:text-xs file:font-medium file:shadow-xs hover:file:bg-zinc-100 dark:file:bg-zinc-800 dark:file:text-zinc-200"
+              />
+              <button
+                type="submit"
+                name="mode"
+                value="upload"
+                disabled={
+                  isPending ||
+                  !selectedFileName ||
+                  (fileCheck !== null && !fileCheck.ok)
+                }
+                onClick={() => setSelectedGeneId(null)}
+                className="rounded-md bg-slate-900 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 cursor-pointer"
+              >
+                {isPending ? "Building..." : "Build from Upload"}
+              </button>
+            </div>
+            {fileCheck &&
+              (fileCheck.ok ? (
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  ✓ {fileCheck.edgeCount} edge
+                  {fileCheck.edgeCount === 1 ? "" : "s"} detected
+                  {fileCheck.hasScore ? " (with confidence scores)" : ""}
+                </p>
+              ) : (
+                <p
+                  role="alert"
+                  className="text-xs font-medium text-red-600 dark:text-red-400"
+                >
+                  {fileCheck.error}
+                </p>
+              ))}
           </div>
 
           <div className="flex items-center gap-2">
