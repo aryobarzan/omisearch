@@ -16,11 +16,7 @@ export type UploadActionState =
 export type NetworkActionState =
   | { status: "idle" }
   | { status: "error"; message: string }
-  | {
-      status: "success";
-      network: NetworkResponse;
-      source: "sample" | "upload";
-    };
+  | { status: "success"; network: NetworkResponse };
 
 async function extractErrorDetail(
   response: Response,
@@ -156,7 +152,7 @@ export async function buildAnalysisNetwork(
   formData: FormData,
 ): Promise<NetworkActionState> {
   const analysisId = String(formData.get("analysis_id") ?? "").trim();
-  const mode = String(formData.get("mode") ?? "sample");
+  const hasStored = formData.get("has_stored_interactions") === "true";
   const padjThreshold = String(formData.get("padj_threshold") ?? "0.05");
   const lfcThreshold = String(formData.get("lfc_threshold") ?? "1.0");
   const minScore = String(formData.get("min_score") ?? "").trim();
@@ -167,6 +163,17 @@ export async function buildAnalysisNetwork(
     return { status: "error", message: "Invalid analysis ID." };
   }
 
+  const hasUploadedFile =
+    interactionsFile instanceof File && interactionsFile.size > 0;
+
+  if (!hasUploadedFile && !hasStored) {
+    return {
+      status: "error",
+      message:
+        "Please select an interactions CSV file (gene_a,gene_b[,score]).",
+    };
+  }
+
   const payload = new FormData();
   payload.append("padj_threshold", padjThreshold);
   payload.append("lfc_threshold", lfcThreshold);
@@ -174,19 +181,7 @@ export async function buildAnalysisNetwork(
   if (minScore !== "") {
     payload.append("min_score", minScore);
   }
-
-  const useSample = mode === "sample";
-  if (useSample) {
-    payload.append("use_sample", "true");
-  } else {
-    if (!(interactionsFile instanceof File) || interactionsFile.size === 0) {
-      return {
-        status: "error",
-        message:
-          "Please select an interactions CSV file (gene_a,gene_b[,score]).",
-      };
-    }
-    payload.append("use_sample", "false");
+  if (hasUploadedFile) {
     payload.append("interactions_file", interactionsFile);
   }
 
@@ -213,9 +208,5 @@ export async function buildAnalysisNetwork(
   }
 
   const network = (await response.json()) as NetworkResponse;
-  return {
-    status: "success",
-    network,
-    source: useSample ? "sample" : "upload",
-  };
+  return { status: "success", network };
 }

@@ -20,10 +20,14 @@ export default function NetworkView({
   analysisId,
   groupA,
   groupB,
+  initialNetwork = null,
+  hasStoredInteractions = false,
 }: {
   analysisId: number;
   groupA: string;
   groupB: string;
+  initialNetwork?: NetworkResponse | null;
+  hasStoredInteractions?: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
     buildAnalysisNetwork,
@@ -33,7 +37,8 @@ export default function NetworkView({
   const [selectedGeneId, setSelectedGeneId] = useState<string | null>(null);
 
   const network: NetworkResponse | null =
-    state.status === "success" ? state.network : null;
+    state.status === "success" ? state.network : initialNetwork;
+  const hasStored = hasStoredInteractions || network !== null;
 
   const selectedNode: CytoscapeNodeData | null = useMemo(() => {
     if (!network || !selectedGeneId) return null;
@@ -78,14 +83,15 @@ export default function NetworkView({
           Gene–Gene Interaction Network
         </h2>
         <p className="type-body-sm text-on-surface-variant">
-          Overlay significant DGE genes onto an interaction edge list (
-          <code className="font-mono text-xs">gene_a,gene_b[,score]</code>) or
-          load the bundled STRING-style sample interactions.
+          Overlay significant DGE genes onto a gene–gene interaction edge list (
+          <code className="font-mono text-xs">gene_a,gene_b[,score]</code>) and
+          filter by significance or edge confidence.
         </p>
       </div>
 
       <NetworkControlsForm
         analysisId={analysisId}
+        hasStoredInteractions={hasStored}
         formAction={formAction}
         isPending={isPending}
         state={state}

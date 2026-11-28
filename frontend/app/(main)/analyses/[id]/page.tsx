@@ -1,5 +1,8 @@
 import { apiFetch } from "@/app/lib/api";
-import type { AnalysisRunDetail } from "@/app/lib/types/analysis";
+import type {
+  AnalysisRunDetail,
+  NetworkResponse,
+} from "@/app/lib/types/analysis";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound, unstable_rethrow } from "next/navigation";
@@ -58,6 +61,26 @@ async function AnalysisDetailContent({
   }
 
   const isCompleted = run.status === "completed";
+  let initialNetwork: NetworkResponse | null = null;
+  if (isCompleted && run.has_interactions) {
+    try {
+      const form = new FormData();
+      form.append("padj_threshold", "0.05");
+      form.append("lfc_threshold", "1.0");
+      form.append("include_isolated", "false");
+      const netRes = await apiFetch(`/analyses/${run.id}/network`, {
+        method: "POST",
+        body: form,
+        cache: "no-store",
+      });
+      if (netRes.ok) {
+        initialNetwork = (await netRes.json()) as NetworkResponse;
+      }
+    } catch (err) {
+      unstable_rethrow(err);
+    }
+  }
+
   const sigUp = isCompleted
     ? run.results.filter(
         (r) => r.adjusted_p_value <= 0.05 && r.log2_fold_change > 0,
@@ -131,6 +154,8 @@ async function AnalysisDetailContent({
             analysisId={run.id}
             groupA={run.group_a ?? "Group A"}
             groupB={run.group_b ?? "Group B"}
+            initialNetwork={initialNetwork}
+            hasStoredInteractions={run.has_interactions}
           />
         </>
       ) : (

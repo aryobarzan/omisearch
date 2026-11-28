@@ -14,6 +14,7 @@ export type AnalysisRunSummary = {
   n_group_b: number | null;
   total_genes: number | null;
   significant_genes: number | null;
+  has_interactions: boolean;
   created_at: string;
   updated_at: string;
 };

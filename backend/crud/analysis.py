@@ -14,6 +14,7 @@ def create_analysis_run(
     name: str,
     expression_csv: str,
     annotations_csv: str,
+    interactions_csv: str | None = None,
     test_method: TestMethod = TestMethod.welch_t,
     is_log2: bool = True,
 ) -> AnalysisRun:
@@ -25,6 +26,7 @@ def create_analysis_run(
         is_log2=is_log2,
         expression_csv=expression_csv,
         annotations_csv=annotations_csv,
+        interactions_csv=interactions_csv,
     )
     db.add(run)
     db.commit()
@@ -77,6 +79,16 @@ def save_analysis_results(
 # Mark an analysis run as failed when DGE execution cannot complete.
 def mark_analysis_failed(db: Session, run: AnalysisRun) -> AnalysisRun:
     run.status = AnalysisStatus.failed
+    db.commit()
+    db.refresh(run)
+    return run
+
+
+# Persist a validated gene-gene interactions edge-list CSV onto an existing AnalysisRun.
+def save_analysis_interactions(
+    db: Session, run: AnalysisRun, interactions_csv: str
+) -> AnalysisRun:
+    run.interactions_csv = interactions_csv
     db.commit()
     db.refresh(run)
     return run

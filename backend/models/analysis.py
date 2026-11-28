@@ -51,6 +51,8 @@ class AnalysisRun(Base):
     # Raw CSV inputs retained so the run can be executed or re-run without re-uploading
     expression_csv: Mapped[str] = mapped_column(Text)
     annotations_csv: Mapped[str] = mapped_column(Text)
+    # Optional gene-gene interaction edge list CSV (preloaded for sample runs, saved on upload)
+    interactions_csv: Mapped[str | None] = mapped_column(Text, nullable=True)
     # JSON-serialized list of per-gene DGE results once status == completed
     results_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -59,6 +61,11 @@ class AnalysisRun(Base):
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
     )
+
+    @property
+    def has_interactions(self) -> bool:
+        """Return True if an interactions edge-list CSV is stored on this run."""
+        return bool(self.interactions_csv and self.interactions_csv.strip())
 
     @property
     def results(self) -> list[dict]:

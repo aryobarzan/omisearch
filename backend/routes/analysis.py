@@ -149,10 +149,11 @@ def create_sample_analysis(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Create an analysis run preloaded with the bundled simulated sample dataset."""
+    """Create an analysis run preloaded with the bundled simulated sample dataset and interaction network."""
     opts = payload or AnalysisSampleCreateSchema()
     expression_csv = _read_sample_file("expression.csv")
     annotations_csv = _read_sample_file("annotations.csv")
+    interactions_csv = _read_sample_file("interactions.csv")
 
     run = crud_analysis.create_analysis_run(
         db,
@@ -160,6 +161,7 @@ def create_sample_analysis(
         name=opts.name,
         expression_csv=expression_csv,
         annotations_csv=annotations_csv,
+        interactions_csv=interactions_csv,
         test_method=opts.test_method,
         is_log2=opts.is_log2,
     )
@@ -237,10 +239,15 @@ async def build_analysis_network(
             detail="Analysis run has not completed yet. Run DGE analysis first.",
         )
 
-    if use_sample:
-        interactions_csv = _read_sample_file("interactions.csv")
-    elif interactions_file is not None:
+    should_persist = False
+    if interactions_file is not None:
         interactions_csv = await _read_upload_csv(interactions_file, "Interactions")
+        should_persist = True
+    elif use_sample:
+        interactions_csv = _read_sample_file("interactions.csv")
+        should_persist = True
+    elif run.interactions_csv:
+        interactions_csv = run.interactions_csv
     else:
         raise HTTPException(
             status_code=400,
@@ -258,5 +265,8 @@ async def build_analysis_network(
         )
     except NetworkValidationError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+    if should_persist:
+        crud_analysis.save_analysis_interactions(db, run, interactions_csv)
 
     return network_result.to_dict()

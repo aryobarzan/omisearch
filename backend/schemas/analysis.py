@@ -47,6 +47,7 @@ class AnalysisRunSummarySchema(BaseModel):
     n_group_b: int | None = None
     total_genes: int | None = None
     significant_genes: int | None = None
+    has_interactions: bool = False
     created_at: datetime
     updated_at: datetime
 

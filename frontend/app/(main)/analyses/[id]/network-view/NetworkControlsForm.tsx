@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   LoaderCircle,
   Network,
-  Sparkles,
   Upload,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -43,6 +42,7 @@ const THRESHOLD_FIELDS = [
 
 interface NetworkControlsFormProps {
   analysisId: number;
+  hasStoredInteractions: boolean;
   formAction: (payload: FormData) => void;
   isPending: boolean;
   state: NetworkActionState;
@@ -51,6 +51,7 @@ interface NetworkControlsFormProps {
 
 export function NetworkControlsForm({
   analysisId,
+  hasStoredInteractions,
   formAction,
   isPending,
   state,
@@ -78,9 +79,21 @@ export function NetworkControlsForm({
     }
   }
 
+  const canSubmit =
+    !isPending &&
+    (fileCheck === null || fileCheck.ok) &&
+    (Boolean(selectedFileName) || hasStoredInteractions);
+
+  const isUpdatingStored = hasStoredInteractions && !selectedFileName;
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="analysis_id" value={analysisId} />
+      <input
+        type="hidden"
+        name="has_stored_interactions"
+        value={hasStoredInteractions ? "true" : "false"}
+      />
       {includeIsolated && (
         <input type="hidden" name="include_isolated" value="on" />
       )}
@@ -138,7 +151,7 @@ export function NetworkControlsForm({
         </div>
       </div>
 
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-ghost-border bg-surface-container-low/60 p-4 lg:flex-row lg:items-center">
+      <div className="flex flex-col justify-between gap-3 rounded-2xl border border-ghost-border bg-surface-container-low/60 p-4 sm:flex-row sm:items-center">
         <div className="flex flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <input
@@ -158,31 +171,19 @@ export function NetworkControlsForm({
               className="outlined-filled-button border-ghost-border-strong bg-surface-container-lowest px-4 py-2 font-medium text-on-surface shadow-xs hover:border-primary/35 hover:bg-primary/5"
             >
               <Upload aria-hidden="true" className="size-3.5 text-primary" />
-              <span>{selectedFileName || "Choose interactions CSV..."}</span>
+              <span>
+                {selectedFileName ||
+                  (hasStoredInteractions
+                    ? "Replace interactions CSV..."
+                    : "Choose interactions CSV...")}
+              </span>
             </button>
 
-            <button
-              type="submit"
-              name="mode"
-              value="upload"
-              disabled={
-                isPending ||
-                !selectedFileName ||
-                (fileCheck !== null && !fileCheck.ok)
-              }
-              onClick={onResetSelection}
-              className="filled-button px-4 py-2 text-xs"
-            >
-              {isPending ? (
-                <LoaderCircle
-                  aria-hidden="true"
-                  className="size-3.5 shrink-0 animate-spin"
-                />
-              ) : (
-                <Network aria-hidden="true" className="size-3.5 shrink-0" />
-              )}
-              <span>{isPending ? "Building..." : "Build from Upload"}</span>
-            </button>
+            {isUpdatingStored && (
+              <span className="type-body-sm text-xs text-outline">
+                Using stored interactions edge list
+              </span>
+            )}
           </div>
 
           {fileCheck &&
@@ -205,29 +206,30 @@ export function NetworkControlsForm({
             ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="type-body-sm text-xs text-outline">or</span>
-          <button
-            type="submit"
-            name="mode"
-            value="sample"
-            disabled={isPending}
-            onClick={onResetSelection}
-            className="outlined-filled-button px-4 py-2"
-          >
-            {isPending ? (
-              <LoaderCircle
-                aria-hidden="true"
-                className="size-3.5 shrink-0 animate-spin"
-              />
-            ) : (
-              <Sparkles aria-hidden="true" className="size-3.5 shrink-0" />
-            )}
-            <span>
-              {isPending ? "Loading..." : "Load Sample Interactions"}
-            </span>
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          onClick={onResetSelection}
+          className="filled-button shrink-0 px-5 py-2.5 text-xs"
+        >
+          {isPending ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className="size-3.5 shrink-0 animate-spin"
+            />
+          ) : (
+            <Network aria-hidden="true" className="size-3.5 shrink-0" />
+          )}
+          <span>
+            {isPending
+              ? isUpdatingStored
+                ? "Updating..."
+                : "Building..."
+              : isUpdatingStored
+                ? "Update Network"
+                : "Build Network"}
+          </span>
+        </button>
       </div>
 
       {state.status === "error" && (
