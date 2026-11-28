@@ -62,14 +62,10 @@ export default function SampleDatasetCard() {
             <div
               role="radiogroup"
               aria-labelledby={testGroupLabelId}
-              className="inline-flex flex-wrap items-center gap-1.5 self-start"
+              className="chip-group self-start"
             >
-              {TEST_OPTIONS.map((option, index) => {
+              {TEST_OPTIONS.map((option) => {
                 const selected = testMethod === option.value;
-                const unselectedRadius =
-                  index === 0
-                    ? "rounded-l-full rounded-r-lg"
-                    : "rounded-l-lg rounded-r-full";
 
                 return (
                   <button
@@ -81,8 +77,8 @@ export default function SampleDatasetCard() {
                     onClick={() => setTestMethod(option.value)}
                     className={
                       selected
-                        ? "filled-button filled-button-inverted text-xs text-on-primary-fixed shadow-md"
-                        : `type-label-lg inline-flex cursor-pointer items-center gap-2 ${unselectedRadius} border border-on-primary/15 bg-on-primary/15 px-5 py-2.5 text-xs font-medium text-on-primary transition-colors hover:bg-on-primary/25 active:bg-on-primary/35 disabled:cursor-not-allowed disabled:opacity-60`
+                        ? "chip chip-inverted chip-selected"
+                        : "chip chip-inverted"
                     }
                   >
                     {selected && (

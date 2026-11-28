@@ -53,11 +53,7 @@ export function OptionChipGroup<T extends string | boolean>({
         )}
       </div>
 
-      <div
-        role="radiogroup"
-        aria-labelledby={labelId}
-        className="flex flex-wrap items-center gap-1.5"
-      >
+      <div role="radiogroup" aria-labelledby={labelId} className="chip-group">
         {options.map((option) => {
           const selected = value === option.value;
 

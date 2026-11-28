@@ -1,15 +1,13 @@
 import { apiFetch } from "@/app/lib/api";
 import type { AnalysisRunDetail } from "@/app/lib/types/analysis";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
-import NetworkView from "./NetworkView";
-import ResultsTable from "./ResultsTable";
-
-const TEST_LABELS: Record<AnalysisRunDetail["test_method"], string> = {
-  welch_t: "Welch's t-test",
-  mann_whitney: "Mann–Whitney U",
-};
+import { TEST_LABELS } from "../../runs/runFormatting";
+import NetworkView from "./network-view/NetworkView";
+import ResultsTable from "./results-table/ResultsTable";
+import { ExpressionSummaryCard } from "./summary/ExpressionSummaryCard";
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -53,92 +51,76 @@ async function AnalysisDetailContent({
 
   if (loadError || !run) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+      <div role="alert" className="alert-error rounded-3xl p-6 text-sm">
         {loadError ?? "Analysis run could not be loaded."}
       </div>
     );
   }
 
-  const sigUp = run.results.filter(
-    (r) => r.adjusted_p_value <= 0.05 && r.log2_fold_change > 0,
-  ).length;
-  const sigDown = run.results.filter(
-    (r) => r.adjusted_p_value <= 0.05 && r.log2_fold_change < 0,
-  ).length;
+  const isCompleted = run.status === "completed";
+  const sigUp = isCompleted
+    ? run.results.filter(
+        (r) => r.adjusted_p_value <= 0.05 && r.log2_fold_change > 0,
+      ).length
+    : 0;
+  const sigDown = isCompleted
+    ? run.results.filter(
+        (r) => r.adjusted_p_value <= 0.05 && r.log2_fold_change < 0,
+      ).length
+    : 0;
+
+  const metaParts = [
+    TEST_LABELS[run.test_method],
+    run.is_log2 ? "log2-transformed" : "linear scale",
+    run.group_a && run.group_b
+      ? `${run.group_a} (n=${run.n_group_a}) vs. ${run.group_b} (n=${run.n_group_b})`
+      : "Groups pending",
+  ];
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <Link href="/analyses" className="hover:underline">
-              All Runs
-            </Link>
-            <span>/</span>
-            <span>Run #{run.id}</span>
-          </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            {run.name}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {TEST_LABELS[run.test_method]} ·{" "}
-            {run.is_log2 ? "log2-transformed" : "linear scale"} ·{" "}
-            {run.group_a && run.group_b
-              ? `${run.group_a} (n=${run.n_group_a}) vs. ${run.group_b} (n=${run.n_group_b})`
-              : "Groups pending"}{" "}
-            · {formatTimestamp(run.created_at)}
-          </p>
-        </div>
-
-        <Link
-          href="/"
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      <section className="flex flex-col gap-1.5">
+        <nav
+          aria-label="Breadcrumb"
+          className="type-body-sm flex items-center gap-1.5 text-xs text-outline"
         >
-          ← Dashboard
-        </Link>
-      </div>
+          <Link
+            href="/analyses"
+            className="font-medium transition-colors hover:text-primary"
+          >
+            All Runs
+          </Link>
+          <ChevronRight aria-hidden="true" className="size-3.5" />
+          <span className="type-metric-sm text-on-surface-variant">
+            Run #{run.id}
+          </span>
+        </nav>
 
-      {/* Summary metric cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Total Genes
-          </p>
-          <p className="mt-1 text-2xl font-semibold">
-            {run.total_genes ?? "—"}
-          </p>
-        </div>
+        <h1 className="type-headline-lg text-on-surface">{run.name}</h1>
 
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Significant (padj ≤ 0.05)
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
-            {run.significant_genes ?? "—"}
-          </p>
-        </div>
+        <p className="type-body-sm flex flex-wrap items-center gap-x-2 gap-y-1 text-on-surface-variant">
+          {metaParts.map((part) => (
+            <span key={part} className="inline-flex items-center gap-2">
+              <span>{part}</span>
+              <span aria-hidden="true" className="text-outline-variant">
+                ·
+              </span>
+            </span>
+          ))}
+          <span className="type-metric-sm text-outline">
+            {formatTimestamp(run.created_at)}
+          </span>
+        </p>
+      </section>
 
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Upregulated (padj ≤ 0.05)
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">
-            {run.status === "completed" ? sigUp : "—"}
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Downregulated (padj ≤ 0.05)
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">
-            {run.status === "completed" ? sigDown : "—"}
-          </p>
-        </div>
-      </div>
-
-      {run.status === "completed" ? (
+      {isCompleted ? (
         <>
+          <ExpressionSummaryCard
+            totalGenes={run.total_genes}
+            significantGenes={run.significant_genes}
+            sigUp={sigUp}
+            sigDown={sigDown}
+          />
           <ResultsTable
             results={run.results}
             groupA={run.group_a ?? "Group A"}
@@ -152,11 +134,29 @@ async function AnalysisDetailContent({
           />
         </>
       ) : (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
-          This analysis run is currently <strong>{run.status}</strong> and has
-          no DGE results yet.
+        <div
+          role="status"
+          className="type-body-md rounded-3xl border border-status-warning/30 bg-status-warning-soft p-6 text-on-surface"
+        >
+          This analysis run is currently{" "}
+          <strong className="font-semibold">{run.status}</strong> and has no DGE
+          results yet.
         </div>
       )}
+    </div>
+  );
+}
+
+function AnalysisDetailSkeleton() {
+  return (
+    <div className="flex flex-col gap-6" aria-busy="true">
+      <div className="flex flex-col gap-2">
+        <div className="h-4 w-32 animate-pulse rounded-full bg-surface-container-low" />
+        <div className="h-8 w-80 animate-pulse rounded-xl bg-surface-container-low" />
+        <div className="h-4 w-96 max-w-full animate-pulse rounded-full bg-surface-container-low" />
+      </div>
+      <div className="h-48 animate-pulse rounded-3xl border border-ghost-border bg-surface-container-lowest" />
+      <div className="h-96 animate-pulse rounded-3xl border border-ghost-border bg-surface-container-lowest" />
     </div>
   );
 }
@@ -167,13 +167,7 @@ export default function AnalysisDetailPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense
-      fallback={
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-          Loading analysis results...
-        </div>
-      }
-    >
+    <Suspense fallback={<AnalysisDetailSkeleton />}>
       <AnalysisDetailContent params={params} />
     </Suspense>
   );

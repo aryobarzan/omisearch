@@ -100,13 +100,22 @@
     cursor: not-allowed;
   }
 
-  /* Connected M3-style selection / filter chip */
+  /* Material 3 Expressive connected button / filter chip group (2px gap) */
+  /* Source: https://m3.material.io/components/button-groups/specs */
+  .chip-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  /* Connected M3 Expressive selection / filter chip */
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 1rem;
-    border-radius: var(--radius-lg);
+    border-radius: 0.5rem;
     border: 1px solid var(--ghost-border-strong);
     background-color: color-mix(
       in srgb,
@@ -127,14 +136,16 @@
       opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Use ~half-height radius (18px) instead of 9999px on outer ends so CSS
+     corner-overlap clamping doesn't crush the 8px inner corners down to 0px. */
   .chip:first-child {
-    border-top-left-radius: var(--radius-full);
-    border-bottom-left-radius: var(--radius-full);
+    border-top-left-radius: 1.125rem;
+    border-bottom-left-radius: 1.125rem;
   }
 
   .chip:last-child {
-    border-top-right-radius: var(--radius-full);
-    border-bottom-right-radius: var(--radius-full);
+    border-top-right-radius: 1.125rem;
+    border-bottom-right-radius: 1.125rem;
   }
 
   .chip:hover:not(:disabled) {
@@ -159,6 +170,62 @@
   .chip.chip-selected:active:not(:disabled) {
     background-color: var(--on-primary-fixed);
     color: var(--on-primary);
+  }
+
+  /* Inverted chip variant for primary / dark surfaces (e.g. Quick-Start card) */
+  .chip.chip-inverted {
+    padding: 0.625rem 1.25rem;
+    border-color: color-mix(in srgb, var(--on-primary) 15%, transparent);
+    background-color: color-mix(in srgb, var(--on-primary) 15%, transparent);
+    color: var(--on-primary);
+  }
+
+  .chip.chip-inverted:first-child {
+    border-top-left-radius: 1.25rem;
+    border-bottom-left-radius: 1.25rem;
+  }
+
+  .chip.chip-inverted:last-child {
+    border-top-right-radius: 1.25rem;
+    border-bottom-right-radius: 1.25rem;
+  }
+
+  .chip.chip-inverted:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--on-primary) 25%, transparent);
+    color: var(--on-primary);
+  }
+
+  .chip.chip-inverted:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--on-primary) 35%, transparent);
+    color: var(--on-primary);
+  }
+
+  .chip.chip-inverted.chip-selected {
+    border-radius: var(--radius-full);
+    border-color: transparent;
+    background-color: var(--surface-container-lowest);
+    color: var(--on-primary-fixed);
+    box-shadow:
+      0 4px 6px -1px rgba(15, 23, 42, 0.12),
+      0 2px 4px -2px rgba(15, 23, 42, 0.08);
+  }
+
+  .chip.chip-inverted.chip-selected:hover:not(:disabled) {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-container-lowest) 90%,
+      transparent
+    );
+    color: var(--on-primary-fixed);
+  }
+
+  .chip.chip-inverted.chip-selected:active:not(:disabled) {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-container-lowest) 80%,
+      transparent
+    );
+    color: var(--on-primary-fixed);
   }
 
   .chip:disabled {
@@ -205,6 +272,119 @@
 
   .text-input.text-input-error {
     border-color: color-mix(in srgb, var(--error) 65%, transparent);
+  }
+
+  /* Pill-shaped search input (pairs with leading Search icon & trailing Clear button) */
+  .search-input {
+    width: 100%;
+    padding: 0.5rem 2.25rem 0.5rem 2.375rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--ghost-border-strong);
+    background-color: color-mix(
+      in srgb,
+      var(--surface-container-low) 60%,
+      transparent
+    );
+    color: var(--on-surface);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+    transition:
+      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .search-input::placeholder {
+    color: var(--outline);
+  }
+
+  .search-input:focus {
+    border-color: var(--primary);
+    background-color: var(--surface-container-lowest);
+    outline: none;
+  }
+
+  /* Primary elevated rounded-3xl workbench section container */
+  .section-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    border: 1px solid var(--ghost-border-strong);
+    background-color: var(--surface-container-lowest);
+    box-shadow: var(--shadow-card);
+  }
+
+  @media (min-width: 768px) {
+    .section-card {
+      padding: 2rem;
+    }
+  }
+
+  /* Compact icon-only button (toolbar zoom/fit, clear buttons) */
+  .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    color: var(--on-surface-variant);
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .icon-button:hover:not(:disabled) {
+    background-color: var(--surface-container-low);
+    color: var(--on-surface);
+  }
+
+  /* Subtle dot separating horizontal filter chip groups */
+  .divider-dot {
+    display: none;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: var(--radius-full);
+    background-color: var(--outline-variant);
+  }
+
+  @media (min-width: 640px) {
+    .divider-dot {
+      display: inline-block;
+    }
+  }
+
+  /* Dashed empty-state panel */
+  .empty-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem;
+    border-radius: 1rem;
+    border: 1px dashed var(--ghost-border-strong);
+    background-color: color-mix(
+      in srgb,
+      var(--surface-container-low) 50%,
+      transparent
+    );
+    text-align: center;
+  }
+
+  /* Error banner */
+  .alert-error {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+    background-color: var(--error-container);
+    color: var(--on-error-container);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    font-weight: 500;
   }
 
   /* Shared 6-column header bar for Recent Runs / All Runs */

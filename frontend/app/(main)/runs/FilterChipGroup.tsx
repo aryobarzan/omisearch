@@ -21,11 +21,7 @@ export function FilterChipGroup<T extends string>({
   onToggle,
 }: FilterChipGroupProps<T>) {
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className="flex flex-wrap items-center gap-1.5"
-    >
+    <div role="group" aria-label={ariaLabel} className="chip-group">
       {options.map((option) => {
         const isSelected = selected.has(option.value);
         return (
