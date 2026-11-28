@@ -1,13 +1,22 @@
+/* ==========================================================================
+   Reusable Component Primitives
+   ========================================================================== */
 @layer components {
   .filled-button {
+    /* custom properties which we will override in the variant filled-button-inverted */
+    --btn-bg: var(--primary);
+    --btn-fg: var(--on-primary);
+    --btn-bg-hover: var(--on-primary-fixed-variant);
+    --btn-bg-active: var(--on-primary-fixed);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.625rem 1.25rem;
     border-radius: var(--radius-full);
-    background-color: var(--primary);
-    color: var(--on-primary);
+    background-color: var(--btn-bg);
+    color: var(--btn-fg);
     font-family: var(--font-sans);
     font-size: 0.8125rem;
     line-height: 1.125rem;
@@ -21,15 +30,31 @@
   }
 
   .filled-button:hover:not(:disabled) {
-    background-color: var(--on-primary-fixed-variant);
+    background-color: var(--btn-bg-hover);
   }
 
   .filled-button:active:not(:disabled) {
-    background-color: var(--on-primary-fixed);
+    background-color: var(--btn-bg-active);
   }
 
   .filled-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Inverted white variant for primary / dark surfaces */
+  .filled-button-inverted {
+    --btn-bg: var(--surface-container-lowest);
+    --btn-fg: var(--on-primary-fixed-variant);
+    --btn-bg-hover: color-mix(
+      in srgb,
+      var(--surface-container-lowest) 90%,
+      transparent
+    );
+    --btn-bg-active: color-mix(
+      in srgb,
+      var(--surface-container-lowest) 80%,
+      transparent
+    );
   }
 }
