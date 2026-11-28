@@ -122,7 +122,7 @@ export default function UploadForm() {
     : null;
 
   return (
-    <section className="flex w-full flex-col gap-6 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
+    <section className="section-card w-full gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
           Upload Omics Dataset
@@ -151,7 +151,7 @@ export default function UploadForm() {
             maxLength={120}
             disabled={isPending}
             placeholder="Leave blank to auto-name or enter custom name (e.g. Treated vs. Control)..."
-            className="type-body-md w-full rounded-2xl border border-ghost-border-strong bg-surface-container-low/60 px-4 py-2.5 text-on-surface shadow-xs transition-colors placeholder:text-outline focus:border-primary focus:bg-surface-container-lowest focus:outline-none disabled:opacity-60"
+            className="text-input"
           />
         </div>
 

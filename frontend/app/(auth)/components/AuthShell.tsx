@@ -29,7 +29,7 @@ export function AuthShell({
           </span>
         </div>
 
-        <section className="flex flex-col gap-6 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-7 shadow-card sm:p-8">
+        <section className="section-card gap-6 p-7 sm:p-8">
           <h1 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
             {title}
           </h1>

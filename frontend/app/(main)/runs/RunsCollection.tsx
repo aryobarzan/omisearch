@@ -91,7 +91,7 @@ export function RunsCollection({
       )}
 
       {filteredRuns.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ghost-border-strong bg-surface-container-low/50 px-6 py-8 text-center">
+        <div className="empty-panel">
           <p className="type-body-md text-on-surface-variant">
             No analysis runs match the selected filters.
           </p>

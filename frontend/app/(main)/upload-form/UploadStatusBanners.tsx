@@ -14,10 +14,7 @@ export function ValidationBanners({
   return (
     <>
       {hardError && (
-        <div
-          role="alert"
-          className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
-        >
+        <div role="alert" className="alert-error">
           {hardError}
         </div>
       )}
@@ -37,10 +34,7 @@ export function ValidationBanners({
 export function ActionResultBanner({ state }: { state: UploadActionState }) {
   if (state.status === "error") {
     return (
-      <div
-        role="alert"
-        className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
-      >
+      <div role="alert" className="alert-error">
         {state.message}
       </div>
     );

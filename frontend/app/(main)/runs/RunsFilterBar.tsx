@@ -54,24 +54,21 @@ export function RunsFilterBar({
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search analysis runs by name"
           placeholder="Search by analysis name..."
-          className="type-body-sm w-full rounded-full border border-ghost-border-strong bg-surface-container-low/60 py-2 pr-9 pl-9.5 text-on-surface shadow-xs transition-colors placeholder:text-outline focus:border-primary focus:bg-surface-container-lowest focus:outline-none"
+          className="search-input"
         />
         {searchQuery && (
           <button
             type="button"
             aria-label="Clear search"
             onClick={() => onSearchChange("")}
-            className="absolute top-1/2 right-2.5 flex h-5 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="icon-button absolute top-1/2 right-1.5 h-6 w-6 -translate-y-1/2 rounded-full"
           >
             <X aria-hidden="true" className="size-3.5" />
           </button>
         )}
       </div>
 
-      <span
-        aria-hidden="true"
-        className="hidden h-1.5 w-1.5 rounded-full bg-outline-variant sm:inline-block"
-      />
+      <span aria-hidden="true" className="divider-dot" />
 
       <FilterChipGroup
         ariaLabel="Filter by status"
@@ -80,10 +77,7 @@ export function RunsFilterBar({
         onToggle={onToggleStatus}
       />
 
-      <span
-        aria-hidden="true"
-        className="hidden h-1.5 w-1.5 rounded-full bg-outline-variant sm:inline-block"
-      />
+      <span aria-hidden="true" className="divider-dot" />
 
       <FilterChipGroup
         ariaLabel="Filter by statistical test"

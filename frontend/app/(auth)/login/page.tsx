@@ -69,10 +69,7 @@ export default function LoginPage() {
         />
 
         {errorMessage && (
-          <div
-            role="alert"
-            className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
-          >
+          <div role="alert" className="alert-error">
             {errorMessage}
           </div>
         )}

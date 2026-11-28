@@ -130,10 +130,7 @@ export default function SampleDatasetCard() {
       </form>
 
       {state.status === "error" && (
-        <div
-          role="alert"
-          className="relative mt-4 rounded-2xl border border-error/25 bg-error-container px-4 py-3 text-sm font-medium text-on-error-container"
-        >
+        <div role="alert" className="alert-error relative mt-4 text-sm">
           {state.message}
         </div>
       )}

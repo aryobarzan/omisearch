@@ -13,7 +13,7 @@ export function RunsListSkeleton({
   rows?: number;
 }) {
   return (
-    <section className="flex flex-col gap-5 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
+    <section className="section-card">
       {title && (
         <div className="flex items-center justify-between pb-4">
           <h2 className="type-headline-md text-xl font-semibold tracking-tight text-on-surface">
@@ -63,7 +63,7 @@ export default async function RunsList({
   const visibleRuns = limit ? runs.slice(0, limit) : runs;
 
   return (
-    <section className="flex flex-col gap-5 rounded-3xl border border-ghost-border-strong bg-surface-container-lowest p-6 shadow-card md:p-8">
+    <section className="section-card">
       {(title || limit) && (
         <div className="flex flex-col justify-between gap-space-sm pb-4 sm:flex-row sm:items-center">
           <div className="flex flex-wrap items-baseline gap-3">
@@ -96,14 +96,11 @@ export default async function RunsList({
       )}
 
       {loadError ? (
-        <div
-          role="alert"
-          className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
-        >
+        <div role="alert" className="alert-error">
           {loadError}
         </div>
       ) : visibleRuns.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-ghost-border-strong bg-surface-container-low/50 px-6 py-8 text-center">
+        <div className="empty-panel">
           <p className="type-body-md text-on-surface-variant">
             No analysis runs yet. Upload your CSV files or use the quick-start
             dataset to get started.
