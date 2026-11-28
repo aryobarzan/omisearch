@@ -285,6 +285,11 @@
 
 /* Base Defaults */
 @layer base {
+  html {
+    /* Reserve space for the scrollbar (only for systems which take up space, i.e., macOS and mobile are not concerned) */
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: var(--background);
     color: var(--on-background);

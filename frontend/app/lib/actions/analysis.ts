@@ -41,30 +41,38 @@ export async function uploadAndRunAnalysis(
   _prevState: UploadActionState,
   formData: FormData,
 ): Promise<UploadActionState> {
-  const name = String(formData.get("name") ?? "").trim();
+  const rawName = String(formData.get("name") ?? "").trim();
   const expressionFile = formData.get("expression_file");
   const annotationsFile = formData.get("annotations_file");
   const testMethod = String(formData.get("test_method") ?? "welch_t");
-  const isLog2 = formData.get("is_log2") === "on";
+  const rawLog2 = formData.get("is_log2");
+  const isLog2 = rawLog2 === "on" || rawLog2 === "true";
 
-  if (!name || name.length > 120) {
+  if (rawName.length > 120) {
     return {
       status: "error",
-      message: "Analysis name must be between 1 and 120 characters.",
+      message: "Analysis name must be at most 120 characters.",
     };
   }
   if (!(expressionFile instanceof File) || expressionFile.size === 0) {
     return {
       status: "error",
-      message: "Please select a gene expression CSV file.",
+      message: "Please provide a gene expression CSV file or raw CSV text.",
     };
   }
   if (!(annotationsFile instanceof File) || annotationsFile.size === 0) {
     return {
       status: "error",
-      message: "Please select a sample annotations CSV file.",
+      message: "Please provide a sample annotations CSV file or raw CSV text.",
     };
   }
+
+  const stem = expressionFile.name.replace(/\.csv$/i, "").trim();
+  const autoName =
+    stem && stem.toLowerCase() !== "expression"
+      ? stem.slice(0, 120)
+      : "DGE Analysis";
+  const name = rawName || autoName;
 
   const payload = new FormData();
   payload.append("name", name);

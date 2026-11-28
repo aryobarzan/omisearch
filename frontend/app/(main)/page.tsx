@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { FdrInfoButton } from "./FdrInfoButton";
 import RunsList, { RunsListSkeleton } from "./RunsList";
 import SampleDatasetCard from "./SampleDatasetCard";
-import UploadForm from "./UploadForm";
+import UploadForm from "./upload-form/UploadForm";
 
 export default function DashboardPage() {
   return (
@@ -21,8 +21,8 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <SampleDatasetCard />
       <UploadForm />
+      <SampleDatasetCard />
       <Suspense fallback={<RunsListSkeleton title="Recent Runs" />}>
         <RunsList limit={2} />
       </Suspense>
