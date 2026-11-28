@@ -1,30 +1,34 @@
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import RunsList, { RunsListSkeleton } from "../RunsList";
+import RunsList, { RunsListSkeleton } from "../runs/RunsList";
 
 export default function AllAnalysesPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+      <section className="flex flex-col justify-between gap-space-md md:flex-row md:items-end">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="type-headline-lg text-on-surface">
             All Analysis Runs
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="type-body-md text-on-surface-variant">
             Browse all differential gene expression runs saved to your account.
           </p>
         </div>
 
-        <Link
-          href="/"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          + New Analysis
-        </Link>
-      </div>
+        <div className="shrink-0">
+          <Link
+            href="/"
+            className="filled-button px-5 py-2.5 text-sm shadow-sm"
+          >
+            <Plus aria-hidden="true" className="size-4 shrink-0" />
+            <span>New Analysis</span>
+          </Link>
+        </div>
+      </section>
 
-      <Suspense fallback={<RunsListSkeleton title="All Analysis Runs" />}>
-        <RunsList />
+      <Suspense fallback={<RunsListSkeleton rows={4} />}>
+        <RunsList showFilters />
       </Suspense>
     </div>
   );

@@ -58,14 +58,8 @@ export function OptionChipGroup<T extends string | boolean>({
         aria-labelledby={labelId}
         className="flex flex-wrap items-center gap-1.5"
       >
-        {options.map((option, index) => {
+        {options.map((option) => {
           const selected = value === option.value;
-          const unselectedRadius =
-            index === 0
-              ? "rounded-l-full rounded-r-lg"
-              : index === options.length - 1
-                ? "rounded-l-lg rounded-r-full"
-                : "rounded-lg";
 
           return (
             <button
@@ -75,11 +69,7 @@ export function OptionChipGroup<T extends string | boolean>({
               aria-checked={selected}
               disabled={disabled}
               onClick={() => onChange(option.value)}
-              className={
-                selected
-                  ? "type-label-lg inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-on-primary-fixed-variant px-4 py-2 text-xs font-semibold text-on-primary shadow-xs transition-colors hover:bg-on-primary-fixed active:bg-on-primary-fixed disabled:cursor-not-allowed disabled:opacity-60"
-                  : `type-label-lg inline-flex cursor-pointer items-center gap-1.5 ${unselectedRadius} border border-ghost-border-strong bg-surface-container-low/80 px-4 py-2 text-xs font-medium text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface active:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60`
-              }
+              className={selected ? "chip chip-selected" : "chip"}
             >
               {selected && (
                 <Check

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { FdrInfoButton } from "./FdrInfoButton";
-import RunsList, { RunsListSkeleton } from "./RunsList";
+import RunsList, { RunsListSkeleton } from "./runs/RunsList";
 import SampleDatasetCard from "./SampleDatasetCard";
 import UploadForm from "./upload-form/UploadForm";
 
