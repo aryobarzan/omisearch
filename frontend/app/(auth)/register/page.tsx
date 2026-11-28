@@ -1,9 +1,12 @@
 "use client";
 
 import { register } from "@/app/lib/actions/auth";
-import Link from "next/link";
+import { LoaderCircle, UserPlus } from "lucide-react";
 import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
+import { AuthField } from "../components/AuthField";
+import { PASSWORD_RULES, USERNAME_RULES } from "../components/authRules";
+import { AuthShell } from "../components/AuthShell";
 
 type RegisterForm = {
   username: string;
@@ -36,117 +39,83 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Create an account
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Register to run and save differential gene expression analyses.
-        </p>
+    <AuthShell
+      title="Create an account"
+      footerPrompt="Already have an account?"
+      footerLinkLabel="Sign in!"
+      footerLinkHref="/login"
+    >
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+        // disable native browser validation tooltips
+        noValidate
+      >
+        <AuthField
+          id="username"
+          label="Username"
+          type="text"
+          autoComplete="username"
+          placeholder="4–32 letters, numbers, _ or -"
+          disabled={isPending}
+          error={errors.username?.message}
+          {...registerField("username", USERNAME_RULES)}
+        />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              autoComplete="username"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm focus:border-blue-600 focus:outline-none dark:border-zinc-700"
-              {...registerField("username", {
-                required: "Username is required.",
-                minLength: {
-                  value: 4,
-                  message: "Username must be at least 4 characters.",
-                },
-                maxLength: {
-                  value: 32,
-                  message: "Username must be at most 32 characters.",
-                },
-                pattern: {
-                  value: /^[a-zA-Z0-9_-]+$/,
-                  message:
-                    "Username can only contain letters, numbers, underscores, and hyphens.",
-                },
-              })}
-            />
-            {errors.username && (
-              <p className="mt-1 text-xs text-red-600">{errors.username.message}</p>
-            )}
-          </div>
+        <AuthField
+          id="password"
+          label="Password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+          disabled={isPending}
+          error={errors.password?.message}
+          {...registerField("password", {
+            ...PASSWORD_RULES,
+            deps: ["repeatPassword"],
+          })}
+        />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm focus:border-blue-600 focus:outline-none dark:border-zinc-700"
-              {...registerField("password", {
-                required: "Password is required.",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters.",
-                },
-                maxLength: {
-                  value: 64,
-                  message: "Password must be at most 64 characters.",
-                },
-                deps: ["repeatPassword"],
-              })}
-            />
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-            )}
-          </div>
+        <AuthField
+          id="repeatPassword"
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Re-enter your password"
+          disabled={isPending}
+          error={errors.repeatPassword?.message}
+          {...registerField("repeatPassword", {
+            required: "Please confirm your password.",
+            validate: (value) =>
+              value === getValues("password") || "Passwords do not match.",
+          })}
+        />
 
-          <div>
-            <label htmlFor="repeatPassword" className="block text-sm font-medium">
-              Repeat Password
-            </label>
-            <input
-              id="repeatPassword"
-              type="password"
-              autoComplete="new-password"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm focus:border-blue-600 focus:outline-none dark:border-zinc-700"
-              {...registerField("repeatPassword", {
-                required: "Please repeat your password.",
-                validate: (value) =>
-                  value === getValues("password") || "Passwords do not match.",
-              })}
-            />
-            {errors.repeatPassword && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.repeatPassword.message}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={!isValid || isPending}
-            className="mt-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        {errorMessage && (
+          <div
+            role="alert"
+            className="type-body-sm rounded-2xl border border-error/25 bg-error-container px-4 py-3 font-medium text-on-error-container"
           >
-            {isPending ? "Creating account..." : "Register"}
-          </button>
+            {errorMessage}
+          </div>
+        )}
 
-          {errorMessage && (
-            <p className="text-sm text-red-600">{errorMessage}</p>
+        <button
+          type="submit"
+          disabled={!isValid || isPending}
+          className="filled-button mt-1 w-full py-3 text-sm shadow-sm"
+        >
+          {isPending ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className="size-4 shrink-0 animate-spin"
+            />
+          ) : (
+            <UserPlus aria-hidden="true" className="size-4 shrink-0" />
           )}
-        </form>
-
-        <hr className="my-6 border-zinc-200 dark:border-zinc-800" />
-        <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-blue-600 hover:underline">
-            Login here
-          </Link>
-        </p>
-      </div>
-    </div>
+          <span>{isPending ? "Creating account..." : "Create account"}</span>
+        </button>
+      </form>
+    </AuthShell>
   );
 }
