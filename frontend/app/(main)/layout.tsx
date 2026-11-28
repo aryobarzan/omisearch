@@ -18,7 +18,7 @@ export default function MainLayout({ children }: LayoutProps<"/">) {
       >
         <NavBar />
       </Suspense>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-8 md:px-10">
         {children}
       </main>
       <footer className="w-full border-t border-ghost-border bg-surface-container-low/60 py-6">

@@ -1,21 +1,25 @@
 import { Suspense } from "react";
+import { FdrInfoButton } from "./FdrInfoButton";
 import RunsList, { RunsListSkeleton } from "./RunsList";
 import SampleDatasetCard from "./SampleDatasetCard";
 import UploadForm from "./UploadForm";
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          DGE Analysis Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Upload expression and annotation CSVs—or run the simulated sample
-          dataset—to perform differential gene expression analysis and explore
-          gene interaction networks.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <section className="flex flex-col justify-between gap-space-md md:flex-row md:items-end">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="type-headline-lg text-on-surface">DGE Analysis</h1>
+          <p className="type-body-md text-on-surface-variant">
+            Perform a differential gene expression analysis from a CSV dataset
+            or explore the sample dataset.
+          </p>
+        </div>
+        {/* In case of small screen size, do not squeeze this info chip. */}
+        <div className="shrink-0">
+          <FdrInfoButton />
+        </div>
+      </section>
 
       <SampleDatasetCard />
       <UploadForm />
